@@ -7,5 +7,7 @@ public enum ComplaintType {
     ROAD,           // சாலை / drainage
     PUBLIC_PROPERTY,// school, ration shop
     SANITATION,     // சுகாதாரம்
+    INFRASTRUCTURE, // NEW: roads, bridges, etc
+    PUBLIC_SERVICES,// NEW: ration, school, etc
     OTHER
 }

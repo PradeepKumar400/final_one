@@ -183,6 +183,8 @@ export const typeConfig = {
   ROAD: { label: "Road", icon: "🛣️", color: "#6b7280", bg: "#f3f4f6", tamil: "சாலை" },
   PUBLIC_PROPERTY: { label: "Public Property", icon: "🏛️", color: "#7c3aed", bg: "#ede9fe", tamil: "பொது சொத்து" },
   SANITATION: { label: "Sanitation", icon: "🗑️", color: "#059669", bg: "#d1fae5", tamil: "சுகாதாரம்" },
+  INFRASTRUCTURE: { label: "Infrastructure", icon: "🛣️", color: "#4f46e5", bg: "#eef2ff", tamil: "கட்டமைப்பு" },
+  PUBLIC_SERVICES: { label: "Public Service", icon: "🏛️", color: "#7c3aed", bg: "#ede9fe", tamil: "பொது சேவை" },
   OTHER: { label: "Other", icon: "📋", color: "#6b7280", bg: "#f3f4f6", tamil: "மற்றவை" }
 };
 

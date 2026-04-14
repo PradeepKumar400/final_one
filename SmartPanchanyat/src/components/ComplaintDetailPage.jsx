@@ -40,8 +40,8 @@ export default function ComplaintDetailPage({ complaint, navigate }) {
   const status = statusConfig[complaint.status] || statusConfig.NEW;
   const priority = priorityConfig[complaint.priority] || priorityConfig.NORMAL;
   const stepIdx = getStepIndex(complaint.status);
-  const beforePhotos = complaint.photos?.filter(p => p.stage === "BEFORE") || [];
-  const afterPhotos = complaint.photos?.filter(p => p.stage === "AFTER") || [];
+  const beforePhotos = complaint.photos?.filter(p => p.stage?.toUpperCase() === "BEFORE") || [];
+  const afterPhotos = complaint.photos?.filter(p => p.stage?.toUpperCase() === "AFTER") || [];
 
   const handleRate = () => {
     if (rating > 0) setRated(true);

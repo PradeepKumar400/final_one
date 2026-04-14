@@ -3,146 +3,206 @@ import { StatusBadge, TypeIcon } from "./StatusBadge";
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins} mins ago`;
+  if (mins < 1) return `Just now`;
+  if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} hour${hrs > 1 ? "s" : ""} ago`;
+  if (hrs < 24) return `${hrs}h ${mins % 60}m ago`;
   const days = Math.floor(hrs / 24);
   if (days === 1) return "Yesterday";
   return `${days} days ago`;
 }
 
 export default function ComplaintCard({ complaint, onClick }) {
-  const beforePhotos = complaint.photos?.filter(p => p.stage === "BEFORE") || [];
-  const afterPhotos = complaint.photos?.filter(p => p.stage === "AFTER") || [];
+  const isEscalated = complaint.status === "ESCALATED";
+  const beforePhoto = complaint.photos?.find(p => p.stage?.toUpperCase() === "BEFORE")?.url;
 
   return (
     <div
       onClick={() => onClick && onClick(complaint)}
       style={{
         background: "#fff",
-        borderRadius: "16px",
-        padding: "20px",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
+        borderRadius: "32px",
+        padding: "32px",
+        boxShadow: "0 10px 40px rgba(0,0,0,0.04)",
         cursor: "pointer",
-        border: complaint.isSlaBreached ? "1.5px solid #fca5a5" : "1px solid #f3f4f6",
-        transition: "box-shadow 0.2s, transform 0.15s",
+        border: complaint.isSlaBreached ? "2px solid #fee2e2" : "1px solid #f3f4f6",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        display: "flex",
+        gap: "24px",
         position: "relative"
       }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.12)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.07)"; e.currentTarget.style.transform = "none"; }}
+      onMouseEnter={e => { 
+        e.currentTarget.style.boxShadow = "0 20px 60px rgba(0,0,0,0.08)"; 
+        e.currentTarget.style.transform = "translateY(-4px)"; 
+      }}
+      onMouseLeave={e => { 
+        e.currentTarget.style.boxShadow = "0 10px 40px rgba(0,0,0,0.04)"; 
+        e.currentTarget.style.transform = "none"; 
+      }}
     >
-      {complaint.isSlaBreached && (
+      {/* ICON AREA */}
+      <div style={{ flexShrink: 0 }}>
         <div style={{
-          background: "#fee2e2", color: "#dc2626", fontSize: "12px", fontWeight: 600,
-          padding: "4px 12px", borderRadius: "6px", marginBottom: "12px",
-          display: "inline-flex", alignItems: "center", gap: "5px"
+          width: "64px",
+          height: "64px",
+          borderRadius: "20px",
+          background: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 8px 16px rgba(0,0,0,0.06)",
+          fontSize: "28px"
         }}>
-          🚨 SLA Breached — Action Required
+          {getTypeIcon(complaint.type)}
         </div>
-      )}
+      </div>
 
-      <div style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
-        <TypeIcon type={complaint.type} />
-
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
-            <div>
-              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#111827" }}>
-                {getComplaintTitle(complaint.type, complaint.description)}
-              </h3>
-              <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "2px" }}>
-                {complaint.locationDescription?.split(",")[0] || ""} · <span style={{ color: "#2563eb", fontWeight: 600 }}>{complaint.wardName?.split("—")[0]?.trim()}</span> · {timeAgo(complaint.updatedAt)}
-              </div>
-            </div>
-            <StatusBadge status={complaint.status} />
+      {/* CONTENT AREA */}
+      <div style={{ flex: 1 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+            <h3 style={{ margin: 0, fontSize: "20px", fontWeight: 800, color: "#1e1b4b" }}>
+              {getSmartTitle(complaint.description, complaint.type)}
+            </h3>
+            <span style={{ 
+              background: "#ede9fe", 
+              color: "#6366f1", 
+              padding: "4px 10px", 
+              borderRadius: "8px", 
+              fontSize: "11px", 
+              fontWeight: 800,
+              letterSpacing: "0.5px"
+            }}>
+              {complaint.complaintNumber}
+            </span>
           </div>
-
-          <p style={{ margin: "8px 0", fontSize: "14px", color: "#374151", lineHeight: "1.5" }}>
-            {complaint.description.slice(0, 90)}{complaint.description.length > 90 ? "..." : ""}
-          </p>
-        </div>
-
-        {beforePhotos.length > 0 && (
-          <div style={{ flexShrink: 0, borderRadius: "10px", overflow: "hidden" }}>
-            {complaint.status === "RESOLVED" && afterPhotos.length > 0 ? (
-              <div style={{ display: "flex", gap: "3px" }}>
-                <div style={{ position: "relative" }}>
-                  <img src={beforePhotos[0].url} alt="before" style={{ width: "80px", height: "70px", objectFit: "cover" }} />
-                  <span style={{ position: "absolute", bottom: "2px", left: "2px", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: "9px", padding: "1px 4px", borderRadius: "3px" }}>Before</span>
-                </div>
-                <div style={{ position: "relative" }}>
-                  <img src={afterPhotos[0].url} alt="after" style={{ width: "80px", height: "70px", objectFit: "cover" }} />
-                  <span style={{ position: "absolute", bottom: "2px", left: "2px", background: "rgba(16,185,129,0.8)", color: "#fff", fontSize: "9px", padding: "1px 4px", borderRadius: "3px" }}>After</span>
-                </div>
-              </div>
-            ) : (
-              <img src={beforePhotos[0].url} alt="complaint" style={{ width: "90px", height: "70px", objectFit: "cover", borderRadius: "10px" }} />
+          
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
+            {complaint.isSlaBreached && (
+              <span style={{ 
+                background: "#fee2e2", 
+                color: "#ef4444", 
+                padding: "4px 12px", 
+                borderRadius: "100px", 
+                fontSize: "11px", 
+                fontWeight: 900,
+                textTransform: "uppercase",
+                letterSpacing: "0.5px"
+              }}>
+                ! SLA BREACHED
+              </span>
             )}
+            {isEscalated && (
+              <button style={{
+                background: "#ef4444",
+                color: "#fff",
+                border: "none",
+                borderRadius: "12px",
+                padding: "8px 20px",
+                fontSize: "13px",
+                fontWeight: 700,
+                cursor: "pointer"
+              }}>
+                Escalated
+              </button>
+            )}
+            <button style={{
+              background: "#fff",
+              color: "#374151",
+              border: "1px solid #e5e7eb",
+              borderRadius: "12px",
+              padding: "8px 20px",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: "pointer",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.03)"
+            }}>
+              Assign Team
+            </button>
           </div>
-        )}
-      </div>
+        </div>
 
-      <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid #f3f4f6", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        {/* METADATA */}
+        <div style={{ 
+          display: "flex", 
+          gap: "24px", 
+          marginBottom: "16px",
+          color: "#6b7280",
+          fontSize: "14px",
+          fontWeight: 600
+        }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <div style={{ width: "26px", height: "26px", borderRadius: "50%", background: "linear-gradient(135deg,#1d4ed8,#7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "10px", fontWeight: 700 }}>
-              {complaint.citizenName[0]}
-            </div>
-            <div>
-              <div style={{ fontSize: "12px", fontWeight: 600, color: "#111827" }}>
-                Complaint ID: <span style={{ color: "#1d4ed8" }}>{complaint.complaintNumber}</span>
-              </div>
-              <div style={{ fontSize: "11px", color: "#10b981" }}>✓ {complaint.citizenName} · {complaint.citizenPhone}</div>
-            </div>
+            <span style={{ fontSize: "16px" }}>📍</span> {complaint.wardName?.split("-")[0] || complaint.wardId}
           </div>
-          {complaint.photos?.length > 0 && (
-            <span style={{ fontSize: "12px", color: "#f59e0b", background: "#fef3c7", padding: "3px 8px", borderRadius: "8px" }}>
-              📷 {complaint.photos.length} Photo{complaint.photos.length > 1 ? "s" : ""} Uploaded
-            </span>
-          )}
-          {complaint.status === "RESOLVED" && afterPhotos.length > 0 && (
-            <span style={{ fontSize: "12px", color: "#059669", background: "#d1fae5", padding: "3px 8px", borderRadius: "8px" }}>
-              ✓ Before & After Proof
-            </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "16px" }}>🕒</span> {timeAgo(complaint.createdAt)}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "16px" }}>👤</span> {complaint.citizenName || "John Doe (Citizen)"}
+          </div>
+        </div>
+
+        {/* DESCRIPTION + PHOTO WRAPPER */}
+        <div style={{ display: "flex", gap: "24px", marginBottom: "24px" }}>
+          <p style={{ 
+            flex: 1,
+            margin: 0, 
+            fontSize: "15px", 
+            color: "#4b5563", 
+            lineHeight: "1.6",
+            fontWeight: 500
+          }}>
+            {complaint.description.length > 220 ? complaint.description.slice(0, 220) + "..." : complaint.description}
+          </p>
+          
+          {beforePhoto && (
+            <div style={{ flexShrink: 0 }}>
+              <img 
+                src={beforePhoto} 
+                alt="Complaint" 
+                style={{ 
+                  width: "140px", 
+                  height: "100px", 
+                  objectFit: "cover", 
+                  borderRadius: "20px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)"
+                }} 
+              />
+            </div>
           )}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span style={{ fontSize: "12px", color: "#9ca3af" }}>
-            {new Date(complaint.updatedAt).toLocaleDateString("en-IN", { month: "short", day: "numeric" })} · {new Date(complaint.updatedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-          </span>
-          <button style={{
-            background: "none", border: "none", cursor: "pointer",
-            color: "#1d4ed8", fontSize: "13px", fontWeight: 600, fontFamily: "inherit"
-          }}>
-            View Details ›
-          </button>
+        {/* LINK */}
+        <div style={{ 
+          color: "#4f46e5", 
+          fontSize: "14px", 
+          fontWeight: 700, 
+          display: "flex", 
+          alignItems: "center", 
+          gap: "6px" 
+        }}>
+          View Full Details →
         </div>
       </div>
-
-      {complaint.status === "IN_PROGRESS" && complaint.assignedToName && (
-        <div style={{ marginTop: "10px" }}>
-          <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>
-            Assigned to <span style={{ color: "#1d4ed8", fontWeight: 600 }}>{complaint.assignedToName}</span>
-          </div>
-          <div style={{ background: "#e5e7eb", borderRadius: "4px", height: "6px", overflow: "hidden" }}>
-            <div style={{ background: "linear-gradient(90deg, #f59e0b, #f97316)", width: "50%", height: "100%", borderRadius: "4px" }} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-function getComplaintTitle(type, description) {
-  const titles = {
-    WATER: "Water Issue",
-    ELECTRICITY: "Electricity Issue",
-    ROAD: "Road Issue",
-    SANITATION: "Sanitation Issue",
-    PUBLIC_PROPERTY: "Public Property Issue",
-    OTHER: "Civic Issue"
+function getTypeIcon(type) {
+  const icons = {
+    INFRASTRUCTURE: "🏢",
+    SANITATION: "🗑️",
+    PUBLIC_SERVICES: "🏛️",
+    ELECTRICITY: "⚡",
+    WATER: "💧",
+    OTHER: "📋"
   };
-  const words = description.split(" ").slice(0, 4).join(" ");
-  return words.length > 20 ? titles[type] : words;
+  return icons[type] || "📋";
 }
+
+function getSmartTitle(desc, type) {
+  if (!desc) return "New Grievance";
+  const words = desc.split(" ");
+  if (words.length > 5) return words.slice(0, 5).join(" ") + "...";
+  return desc;
+}

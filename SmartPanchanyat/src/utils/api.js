@@ -119,6 +119,19 @@ export function submitComplaint(payload) {
 }
 
 /**
+ * Upload photos for a complaint (public).
+ */
+export function uploadComplaintPhotos(complaintId, files) {
+  const formData = new FormData();
+  files.forEach(file => formData.append("files", file));
+
+  return fetch(`${PUBLIC}/${complaintId}/photos`, {
+    method: "POST",
+    body: formData,
+  }).then(handleResponse);
+}
+
+/**
  * Add a public comment to a complaint (citizen).
  */
 export function addComment(complaintId, message) {
@@ -225,10 +238,17 @@ export function mapComplaint(c) {
     resolvedAt:           c.resolvedAt || null,
     createdAt:            c.createdAt,
     updatedAt:            c.updatedAt,
-    photos: (c.photos || []).map(p => ({
-      url:   p.url,
-      stage: p.photoStage || p.stage || "BEFORE",
-    })),
+    photos: (c.photos || []).map(p => {
+      let url = p.url;
+      // If it's a local path (e.g. starting with /api/v1), prefix it with our base origin
+      if (url && url.startsWith("/api/v1")) {
+        url = "http://localhost:8081" + url;
+      }
+      return {
+        url:   url,
+        stage: p.photoStage || p.stage || "BEFORE",
+      };
+    }),
     statusHistory: (c.statusHistory || []).map(h => ({
       status:        h.newStatus || h.status,
       changedByName: h.changedByName,

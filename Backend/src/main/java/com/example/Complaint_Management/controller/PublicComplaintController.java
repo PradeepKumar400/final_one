@@ -16,8 +16,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.UUID;
+
+import org.springframework.http.MediaType;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 
 /**
  * Public read-only endpoints — no authentication required.
@@ -30,6 +35,9 @@ import java.util.UUID;
 public class PublicComplaintController {
 
     private final ComplaintService complaintService;
+
+    @Value("${app.upload.dir:./uploads/complaints}")
+    private String localUploadDir;
 
     /**
      * POST /api/v1/complaints/public/submit
@@ -122,6 +130,51 @@ public class PublicComplaintController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    /**
+     * POST /api/v1/complaints/public/{id}/photos
+     * Publicly upload photos for a complaint (e.g. at submission time).
+     */
+    @PostMapping(value = "/{id}/photos", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ComplaintResponse>> uploadPhotos(
+            @PathVariable UUID id,
+            @RequestParam("files") java.util.List<org.springframework.web.multipart.MultipartFile> files) {
+
+        // Use a generic uploader ID for public uploads
+        UUID publicId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+        ComplaintResponse response = complaintService.uploadPhotos(
+                id, files, publicId, "Public Citizen", "BEFORE");
+
+        return ResponseEntity.ok(ApiResponse.success("Photos uploaded", response));
+    }
+
+    /**
+     * GET /api/v1/complaints/public/photos/{fileName}
+     * Proxy for serving local photos if Cloudinary wasn't used.
+     */
+    @GetMapping("/photos/{fileName}")
+    public ResponseEntity<Resource> servePhoto(@PathVariable String fileName) {
+        try {
+            java.nio.file.Path root = java.nio.file.Paths.get(localUploadDir)
+                    .toAbsolutePath().normalize();
+            java.nio.file.Path file = root.resolve(fileName).normalize();
+
+            Resource resource = new UrlResource(file.toUri());
+
+            if (resource.exists() || resource.isReadable()) {
+                String contentType = "image/jpeg";
+                if (fileName.endsWith(".png"))  contentType = "image/png";
+                if (fileName.endsWith(".webp")) contentType = "image/webp";
+
+                return ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType(contentType))
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
+    }
 
     // ── Inner DTO (keeps the request self-contained) ───────────────────────────
 
