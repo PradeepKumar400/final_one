@@ -30,7 +30,7 @@ public class Complaint {
     private String complaintNumber;
  
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(100)")
     private ComplaintType type;
  
     @Column(nullable = false, length = 1000)
@@ -43,11 +43,12 @@ public class Complaint {
     private String wardName;
  
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(50)")
     @Builder.Default
     private ComplaintStatus status = ComplaintStatus.NEW;
  
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "VARCHAR(50)")
     @Builder.Default
     private Priority priority = Priority.NORMAL;
  

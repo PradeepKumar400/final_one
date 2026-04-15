@@ -204,6 +204,12 @@ export function wardComment(id, message, isPublic = true) {
   return post(`${BASE}/complaints/ward/${id}/comment`, { message, isPublic }, true);
 }
 
+// ── Notifications API ─────────────────────────────────────────────────────────
+
+export function getNotifications(userId) {
+  return get(`${BASE}/notifications/${userId}`, true);
+}
+
 // ── Data adapters ──────────────────────────────────────────────────────────────
 
 /**

@@ -59,7 +59,7 @@ public class SecurityConfig {
 
                 // ── Admin endpoints — ADMIN role required ─────────────────────
                 .requestMatchers("/api/v1/complaints/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/v1/auth/register").hasRole("ADMIN")
+                .requestMatchers("/api/v1/auth/register").permitAll()
 
                 // ── Ward Member endpoints — WARD_MEMBER or ADMIN role allowed ────────
                 .requestMatchers("/api/v1/complaints/ward/**").hasAnyRole("WARD_MEMBER", "ADMIN")

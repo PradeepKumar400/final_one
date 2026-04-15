@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { submitComplaint, mapComplaint, uploadComplaintPhotos } from "../utils/api";
+import { Construction, Trash2, Building2, Zap, FileText, CheckCircle, ArrowRight, Landmark, ShieldCheck, Camera, X } from "lucide-react";
 
 const TYPES = [
-  { id: "INFRASTRUCTURE", label: "Infrastructure (Roads/Water)", labelTa: "கட்டமைப்பு", icon: "🛣️" },
-  { id: "SANITATION",     label: "Sanitation & Health",       labelTa: "சுத்தம்",      icon: "🗑️" },
-  { id: "PUBLIC_SERVICES", label: "Public Services",          labelTa: "பொது சேவை",    icon: "🏛️" },
-  { id: "ELECTRICITY", label: "Electricity",labelTa:"மின்சாரம்", icon: "⚡" },
-  { id: "OTHER",           label: "Other",                   labelTa: "மற்றவை",       icon: "📋" },
-  
+  { id: "INFRASTRUCTURE", label: "Infrastructure (Roads/Water)", labelTa: "கட்டமைப்பு", icon: <Construction size={18} /> },
+  { id: "SANITATION",     label: "Sanitation & Health",       labelTa: "சுத்தம்",      icon: <Trash2 size={18} /> },
+  { id: "PUBLIC_SERVICES", label: "Public Services",          labelTa: "பொது சேவை",    icon: <Building2 size={18} /> },
+  { id: "ELECTRICITY", label: "Electricity",labelTa:"மின்சாரம்", icon: <Zap size={18} /> },
+  { id: "OTHER",           label: "Other",                   labelTa: "மற்றவை",       icon: <FileText size={18} /> },
 ];
 
 const WARDS = ["WARD-01","WARD-02","WARD-03","WARD-04","WARD-05","WARD-06"];
@@ -71,7 +71,6 @@ export default function RaiseIssuePage({ navigate }) {
       const result = await submitComplaint(payload);
       const mapped = mapComplaint(result);
       
-      // If there's a file, upload it
       if (selectedFile && mapped?.id) {
         try {
           await uploadComplaintPhotos(mapped.id, [selectedFile]);
@@ -85,7 +84,6 @@ export default function RaiseIssuePage({ navigate }) {
       setSubmitted(true);
     } catch (err) {
       console.error("Submission failed:", err);
-      // Stay on the page and show error so the user can try again
       setApiError(`Failed to save complaint on server: ${err.message}`);
     } finally {
       setSubmitting(false);
@@ -96,7 +94,9 @@ export default function RaiseIssuePage({ navigate }) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f3f8fb", padding: "24px" }}>
         <div style={{ background: "#fff", borderRadius: "32px", padding: "64px 40px", maxWidth: "520px", width: "100%", textAlign: "center", boxShadow: "0 24px 64px rgba(0,0,0,0.08)" }}>
-          <div style={{ fontSize: "72px", marginBottom: "24px" }}>✅</div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px" }}>
+            <CheckCircle size={72} color="#10b981" />
+          </div>
           <h2 style={{ margin: "0 0 12px", fontSize: "32px", fontWeight: 800, color: "#111827" }}>Submitted!</h2>
           <p style={{ color: "#6b7280", fontSize: "16px", marginBottom: "32px" }}>
             Your grievance has been successfully recorded in our digital ledger.
@@ -107,9 +107,9 @@ export default function RaiseIssuePage({ navigate }) {
           </div>
           <button
             onClick={() => navigate("track")}
-            style={{ width: "100%", padding: "18px", background: "#1d4ed8", color: "#fff", border: "none", borderRadius: "100px", fontSize: "16px", fontWeight: 700, cursor: "pointer" }}
+            style={{ width: "100%", padding: "18px", background: "#1d4ed8", color: "#fff", border: "none", borderRadius: "100px", fontSize: "16px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
           >
-            Track My Grievance →
+            Track My Grievance <ArrowRight size={20} />
           </button>
         </div>
       </div>
@@ -117,7 +117,7 @@ export default function RaiseIssuePage({ navigate }) {
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", background: "#fff" }}>
+    <div style={{ height: "100vh", display: "flex", background: "#fff", overflow: "hidden" }}>
       
       {/* ── LEFT SECTION (HERO/INFO) ── */}
       <div style={{ 
@@ -181,14 +181,18 @@ export default function RaiseIssuePage({ navigate }) {
 
           <div style={{ display: "flex", flexDirection: "column", gap: "24px", marginTop: "40px" }}>
             <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
-              <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", fontSize: "18px" }}>🏛️</div>
+              <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                <Landmark size={20} color="#10b981" />
+              </div>
               <div>
                 <div style={{ fontWeight: 800, color: "#111827", fontSize: "15px" }}>Transparent Governance</div>
                 <div style={{ fontSize: "12px", color: "#6b7280" }}>Direct oversight from reps.</div>
               </div>
             </div>
             <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
-              <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", fontSize: "18px" }}>👤</div>
+              <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                <ShieldCheck size={20} color="#10b981" />
+              </div>
               <div>
                 <div style={{ fontWeight: 800, color: "#111827", fontSize: "15px" }}>Accountability First</div>
                 <div style={{ fontSize: "12px", color: "#6b7280" }}>Regular status updates.</div>
@@ -212,7 +216,7 @@ export default function RaiseIssuePage({ navigate }) {
         overflowY: "auto",
         background: "#fff"
       }}>
-        <div style={{ width: "100%", maxWidth: "720px" }}>
+        <div style={{ width: "100%", maxWidth: "1100px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "40px" }}>
              <div>
                 <h2 style={{ fontSize: "32px", fontWeight: 800, color: "#111827", margin: "0 0 8px", letterSpacing: "-0.5px" }}>
@@ -268,9 +272,13 @@ export default function RaiseIssuePage({ navigate }) {
                     fontWeight: 700,
                     cursor: "pointer",
                     transition: "all 0.2s",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
                     boxShadow: form.type === t.id ? "0 4px 12px rgba(16, 185, 129, 0.2)" : "none"
                   }}
                 >
+                  {t.icon}
                   {t.label}
                 </button>
               ))}
@@ -320,7 +328,7 @@ export default function RaiseIssuePage({ navigate }) {
                   justifyContent: "center",
                   fontSize: "12px",
                   color: "#fff"
-                }}>{form.anonymous && "✓"}</div>
+                }}>{form.anonymous && <CheckCircle size={14} />}</div>
                 {form.anonymous ? "Identity Hidden" : "Hide My Identity"}
               </div>
             </div>
@@ -368,7 +376,7 @@ export default function RaiseIssuePage({ navigate }) {
               )}
               {!previewUrl && (
                 <>
-                  <div style={{ fontSize: "32px", marginBottom: "12px" }}>📸</div>
+                  <Camera size={32} color="#9ca3af" style={{ marginBottom: "12px" }} />
                   <div style={{ fontWeight: 700, color: "#4b5563", fontSize: "14px" }}>Click to capture or upload photo</div>
                   <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "4px" }}>PNG, JPG up to 10MB</div>
                 </>
@@ -386,9 +394,9 @@ export default function RaiseIssuePage({ navigate }) {
                 <div style={{ fontSize: "14px", color: "#10b981", fontWeight: 700 }}>✓ {selectedFile.name}</div>
                 <button 
                   onClick={(e) => { e.stopPropagation(); setSelectedFile(null); setPreviewUrl(null); }}
-                  style={{ background: "none", border: "none", color: "#ef4444", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}
+                  style={{ background: "none", border: "none", color: "#ef4444", fontSize: "12px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}
                 >
-                  Remove
+                  <X size={14} /> Remove
                 </button>
               </div>
             )}
@@ -410,8 +418,6 @@ export default function RaiseIssuePage({ navigate }) {
               boxShadow: "0 12px 24px rgba(29, 78, 216, 0.25)",
               transition: "all 0.2s"
             }}
-            onMouseOver={e => !submitting && (e.currentTarget.style.transform = "translateY(-1px)")}
-            onMouseOut={e => !submitting && (e.currentTarget.style.transform = "translateY(0)")}
           >
             {submitting ? "Processing..." : "Submit My Grievance / சமர்ப்பிக்கவும்"}
           </button>

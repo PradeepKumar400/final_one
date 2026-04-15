@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final com.example.Complaint_Management.repository.UserRepository userRepository;
 
     @Value("${twilio.account-sid:}")
     private String twilioAccountSid;
@@ -46,30 +47,55 @@ public class NotificationService {
 
     @Async
     public void notifyNewComplaint(Complaint complaint) {
-        String message = "GramaNiti: புதிய புகார் பதிவாகியுள்ளது. ID: "
-                + complaint.getComplaintNumber()
-                + " | வகை: " + complaint.getType()
-                + " | வார்டு: " + complaint.getWardId();
+        try {
+            String citizenMessage = "GramaNiti: உங்கள் புகார் வெற்றிகரமாக பதிவானது. ID: " + complaint.getComplaintNumber();
+            sendSms(complaint.getCitizenPhone(), complaint, citizenMessage, "Citizen submit confirmation");
 
-        sendSms(complaint.getCitizenPhone(), complaint, message,
-                "New complaint submitted confirmation");
+            String staffMessage = "GramaNiti NEW: வார்டு " + complaint.getWardId() + "-ல் புதிய புகார் ("
+                    + complaint.getComplaintNumber() + ") பதிவாகியுள்ளது. உடனடி நடவடிக்கை தேவை.";
+
+            // 1. Notify the specific Ward Member
+            userRepository.findByWardIdAndRole(complaint.getWardId(), com.example.Complaint_Management.enums.Role.WARD_MEMBER)
+                    .ifPresent(wm -> {
+                        sendSms(wm.getPhone(), complaint, staffMessage, "Ward Member Alert");
+                        saveInAppNotification(complaint, wm.getId(), staffMessage);
+                    });
+
+            // 2. Notify Admins
+            userRepository.findByRole(com.example.Complaint_Management.enums.Role.ADMIN).forEach(admin -> {
+                saveInAppNotification(complaint, admin.getId(), staffMessage);
+            });
+        } catch (Exception e) {
+            log.error("Failed to process background notifications for complaint {}: {}", 
+                complaint.getComplaintNumber(), e.getMessage());
+        }
     }
 
     @Async
     public void notifyStatusChange(Complaint complaint, String smsText) {
-        sendSms(complaint.getCitizenPhone(), complaint, smsText, "Status update");
+        try {
+            sendSms(complaint.getCitizenPhone(), complaint, smsText, "Status update");
+        } catch (Exception e) {
+            log.error("Failed status change notification: {}", e.getMessage());
+        }
     }
 
     @Async
     public void notifySlaBreached(Complaint complaint) {
-        String message = "GramaNiti ALERT: புகார் " + complaint.getComplaintNumber()
-                + " கால அவகாசம் தாண்டியுள்ளது. உடனடி நடவடிக்கை தேவை.";
+        try {
+            String message = "GramaNiti ALERT: புகார் " + complaint.getComplaintNumber()
+                    + " கால அவகாசம் தாண்டியுள்ளது. உடனடி நடவடிக்கை தேவை.";
 
-        // Notify citizen
-        sendSms(complaint.getCitizenPhone(), complaint, message, "SLA breach alert");
+            // Notify citizen
+            sendSms(complaint.getCitizenPhone(), complaint, message, "SLA breach alert");
 
-        // Log in-app notification for ward member
-        saveInAppNotification(complaint, message);
+            // Log in-app notification for ward member
+            if (complaint.getWardMemberId() != null) {
+                saveInAppNotification(complaint, complaint.getWardMemberId(), message);
+            }
+        } catch (Exception e) {
+            log.error("Failed SLA breach notification: {}", e.getMessage());
+        }
     }
 
     private void sendSms(String toPhone, Complaint complaint, String message, String type) {
@@ -99,24 +125,36 @@ public class NotificationService {
                 notification.setStatus("MOCK_SENT");
                 notification.setSentAt(LocalDateTime.now());
             }
+            notificationRepository.save(notification);
         } catch (Exception e) {
             notification.setStatus("FAILED");
             notification.setErrorMessage(e.getMessage());
             log.error("SMS failed for {}: {}", toPhone, e.getMessage());
+            try {
+                notificationRepository.save(notification);
+            } catch (Exception e2) {
+                log.error("Could not even save FAILED notification status: {}", e2.getMessage());
+            }
         }
-
-        notificationRepository.save(notification);
     }
 
-    private void saveInAppNotification(Complaint complaint, String message) {
-        Notification notification = Notification.builder()
-                .complaintId(complaint.getId())
-                .recipientId(complaint.getWardMemberId())
-                .channel("IN_APP")
-                .message(message)
-                .status("SENT")
-                .sentAt(LocalDateTime.now())
-                .build();
-        notificationRepository.save(notification);
+    public void saveInAppNotification(Complaint complaint, java.util.UUID recipientId, String message) {
+        try {
+            Notification notification = Notification.builder()
+                    .complaintId(complaint.getId())
+                    .recipientId(recipientId)
+                    .channel("IN_APP")
+                    .message(message)
+                    .status("SENT")
+                    .sentAt(LocalDateTime.now())
+                    .build();
+            notificationRepository.save(notification);
+        } catch (Exception e) {
+            log.error("Failed to save in-app notification: {}", e.getMessage());
+        }
+    }
+
+    public java.util.List<Notification> getNotificationsForUser(java.util.UUID userId) {
+        return notificationRepository.findByRecipientIdOrderByCreatedAtDesc(userId);
     }
 }

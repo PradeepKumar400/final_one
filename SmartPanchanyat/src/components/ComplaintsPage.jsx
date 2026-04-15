@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { listComplaints, mapComplaint } from "../utils/api";
-import { complaints as mockComplaints, statusConfig } from "../data/complaints";
+import { complaints as mockComplaints } from "../data/complaints";
 import ComplaintCard from "../components/ComplaintCard";
+import { LayoutList, Clock, Activity, CheckCircle, Plus, Search, SlidersHorizontal, AlertTriangle, TrendingUp } from "lucide-react";
 
 const STATUS_TABS = [
-  { label: "All",         value: "ALL" },
-  { label: "Pending",     value: "PENDING_REVIEW" },
-  { label: "In Progress", value: "IN_PROGRESS" },
-  { label: "Resolved",    value: "RESOLVED" }
+  { label: "All",         value: "ALL", icon: <LayoutList size={16} /> },
+  { label: "Pending",     value: "PENDING_REVIEW", icon: <Clock size={16} /> },
+  { label: "In Progress", value: "IN_PROGRESS", icon: <Activity size={16} /> },
+  { label: "Resolved",    value: "RESOLVED", icon: <CheckCircle size={16} /> }
 ];
 
 export default function ComplaintsPage({ navigate }) {
@@ -52,7 +53,6 @@ export default function ComplaintsPage({ navigate }) {
     return matchTab && matchSearch;
   });
 
-  // ── Stats ────────────────────────────────────────────────────────────────
   const stats = {
     total: allComplaints.length,
     pending: allComplaints.filter(c => ["NEW", "PENDING_REVIEW", "VERIFIED"].includes(c.status)).length,
@@ -64,7 +64,7 @@ export default function ComplaintsPage({ navigate }) {
     <div style={{ 
       minHeight: "100vh", 
       background: "#f9fafb", 
-      padding: "40px 48px", 
+      padding: "75px 45px", 
       fontFamily: "'Inter', sans-serif" 
     }}>
       <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
@@ -72,7 +72,7 @@ export default function ComplaintsPage({ navigate }) {
         {/* HEADER SECTION */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "40px" }}>
           <div>
-            <h1 style={{ margin: "0 0 8px", fontSize: "36px", fontWeight: 900, color: "#1e1b4b", letterSpacing: "-0.5px" }}>
+            <h1 style={{ margin: "0 0 10px", fontSize: "36px", fontWeight: 900, color: "#1e1b4b", letterSpacing: "-0.5px" }}>
               Manage Complaints
             </h1>
             <p style={{ margin: 0, color: "#6b7280", fontSize: "16px", fontWeight: 500 }}>
@@ -96,10 +96,8 @@ export default function ComplaintsPage({ navigate }) {
               gap: "8px",
               transition: "transform 0.2s"
             }}
-            onMouseOver={e => e.currentTarget.style.transform = "translateY(-2px)"}
-            onMouseOut={e => e.currentTarget.style.transform = "none"}
           >
-            <span style={{ fontSize: "20px", lineHeight: 1 }}>+</span> Raise New Issue
+            <Plus size={20} /> Raise New Issue
           </button>
         </div>
 
@@ -114,14 +112,14 @@ export default function ComplaintsPage({ navigate }) {
             label="TOTAL COMPLAINTS" 
             value={stats.total} 
             subtitle="+12% from last month" 
-            icon="📋" 
+            icon={<LayoutList size={24} color="#4f46e5" />} 
             color="#4f46e5" 
           />
           <StatCard 
             label="PENDING" 
             value={stats.pending} 
             subtitle="Requires attention" 
-            icon="⏳" 
+            icon={<Clock size={24} color="#f59e0b" />} 
             color="#f59e0b" 
             alert
           />
@@ -129,14 +127,14 @@ export default function ComplaintsPage({ navigate }) {
             label="IN PROGRESS" 
             value={stats.inProgress} 
             subtitle="Active maintenance" 
-            icon="🔄" 
+            icon={<Activity size={24} color="#3b82f6" />} 
             color="#3b82f6" 
           />
           <StatCard 
             label="RESOLVED" 
             value={stats.resolved} 
             subtitle={`${stats.total > 0 ? Math.round((stats.resolved/stats.total)*100) : 0}% resolution rate`} 
-            icon="✅" 
+            icon={<CheckCircle size={24} color="#10b981" />} 
             color="#10b981" 
           />
         </div>
@@ -153,11 +151,12 @@ export default function ComplaintsPage({ navigate }) {
           padding: "16px", 
           border: "1px solid #fff",
           boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-          flexWrap: "wrap"
+          flexWrap: "wrap",
+          boxSizing: "border-box"
         }}>
           {/* SEARCH */}
           <div style={{ position: "relative", minWidth: "240px" }}>
-            <span style={{ position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }}>🔍</span>
+            <Search size={18} style={{ position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }} />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -200,10 +199,13 @@ export default function ComplaintsPage({ navigate }) {
                   fontSize: "14px",
                   fontWeight: 700,
                   transition: "all 0.2s",
-                  whiteSpace: "nowrap"
+                  whiteSpace: "nowrap",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px"
                 }}
               >
-                {tab.label}
+                {tab.icon} {tab.label}
               </button>
             ))}
           </div>
@@ -224,28 +226,28 @@ export default function ComplaintsPage({ navigate }) {
             boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
             flexShrink: 0
           }}>
-            <span>≡</span> More
+            <SlidersHorizontal size={18} /> More
           </button>
         </div>
 
         {/* DATA STATUS BANNER */}
         {usingMock && (
           <div style={{ background: "#fffbeb", border: "1px solid #fef3c7", borderRadius: "16px", padding: "16px", marginBottom: "32px", color: "#92400e", fontSize: "14px", display: "flex", alignItems: "center", gap: "10px", boxShadow: "0 4px 6px rgba(0,0,0,0.02)" }}>
-            <span style={{ fontSize: "20px" }}>⚠️</span> {error} Fallback demo data loaded.
+            <AlertTriangle size={20} /> {error} Fallback demo data loaded.
           </div>
         )}
 
         {/* COMPLAINTS LIST */}
         {loading ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "100px 0" }}>
-            <div className="spinner" style={{ width: "40px", height: "40px", border: "4px solid #f3f4f6", borderTop: "4px solid #4f46e5", borderRadius: "50%", animation: "spin 1s linear infinite", marginBottom: "20px" }} />
+            <div style={{ width: "40px", height: "40px", border: "4px solid #f3f4f6", borderTop: "4px solid #4f46e5", borderRadius: "50%", animation: "spin 1s linear infinite", marginBottom: "20px" }} />
             <div style={{ color: "#6b7280", fontWeight: 500 }}>Syncing with Panchayat Ledger...</div>
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
             {filtered.length === 0 ? (
               <div style={{ textAlign: "center", padding: "100px 0", background: "#fff", borderRadius: "32px", border: "2px dashed #e5e7eb" }}>
-                <div style={{ fontSize: "64px", marginBottom: "20px" }}>🔍</div>
+                <Search size={48} style={{ marginBottom: "20px", color: "#9ca3af" }} />
                 <h3 style={{ fontSize: "20px", color: "#1f2937", margin: "0 0 8px" }}>No matching complaints</h3>
                 <p style={{ color: "#6b7280" }}>Try adjusting your filters or search terms.</p>
               </div>
@@ -292,8 +294,7 @@ function StatCard({ label, value, subtitle, icon, color, alert }) {
           background: `${color}10`, 
           display: "flex", 
           alignItems: "center", 
-          justifyContent: "center", 
-          fontSize: "24px" 
+          justifyContent: "center"
         }}>
           {icon}
         </div>
@@ -306,7 +307,7 @@ function StatCard({ label, value, subtitle, icon, color, alert }) {
         alignItems: "center",
         gap: "6px"
       }}>
-        {alert ? "⚠" : "📈"} {subtitle}
+        {alert ? <AlertTriangle size={14} /> : <TrendingUp size={14} />} {subtitle}
       </div>
     </div>
   );

@@ -1,52 +1,52 @@
 import { useState, useEffect } from "react";
 import { listComplaints, trackComplaint, mapComplaint } from "../utils/api";
-import { complaints as mockComplaints, statusConfig, typeConfig } from "../data/complaints";
+import { complaints as mockComplaints } from "../data/complaints";
 import ComplaintCard from "../components/ComplaintCard";
-
-function timeAgo(dateStr) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins} mins ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} hour${hrs > 1 ? "s" : ""} ago`;
-  return new Date(dateStr).toLocaleDateString("en-IN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-}
+import { 
+  Search, 
+  Filter, 
+  Clock, 
+  Activity, 
+  CheckCircle, 
+  XCircle, 
+  LayoutList, 
+  FileX, 
+  TrendingUp,
+  AlertTriangle
+} from "lucide-react";
 
 const TABS = [
-  { label: "All",         value: "ALL",            icon: "📋" },
-  { label: "Pending",     value: "PENDING_REVIEW", icon: "⏳" },
-  { label: "In Progress", value: "IN_PROGRESS",    icon: "🔄" },
-  { label: "Resolved",    value: "RESOLVED",       icon: "✅" }
+  { label: "All Grievances", value: "ALL", icon: <LayoutList size={16} /> },
+  { label: "Pending", value: "PENDING_REVIEW", icon: <Clock size={16} /> },
+  { label: "In Progress", value: "IN_PROGRESS", icon: <Activity size={16} /> },
+  { label: "Resolved", value: "RESOLVED", icon: <CheckCircle size={16} /> },
 ];
 
 export default function TrackPage({ navigate }) {
-  const [activeTab, setActiveTab]   = useState("ALL");
-  const [search, setSearch]         = useState("");
   const [trackInput, setTrackInput] = useState("");
-  const [allComplaints, setAll]     = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [usingMock, setUsingMock]   = useState(false);
+  const [activeTab, setActiveTab] = useState("ALL");
+  const [search, setSearch] = useState("");
+  const [allComplaints, setAll] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tracking, setTracking] = useState(false);
   const [trackError, setTrackError] = useState(null);
-  const [tracking, setTracking]     = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-
     listComplaints(0, 100)
-      .then(data => {
+      .then((data) => {
         if (cancelled) return;
-        const items = Array.isArray(data) ? data : (data?.content ?? []);
+        const items = Array.isArray(data) ? data : data?.content ?? [];
         setAll(items.map(mapComplaint));
-        setUsingMock(false);
       })
       .catch(() => {
         if (cancelled) return;
-        setAll(mockComplaints);
-        setUsingMock(true);
+        setAll(mockComplaints.map(mapComplaint));
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
-
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => { cancelled = true; };
   }, []);
 
@@ -57,171 +57,173 @@ export default function TrackPage({ navigate }) {
     try {
       const data = await trackComplaint(trackInput.trim());
       const mapped = mapComplaint(data);
-      navigate("details", mapped);
-    } catch (err) {
-      setTrackError(`Complaint "${trackInput}" not found.`);
+      if (mapped) {
+        navigate("details", mapped);
+      } else {
+        setTrackError("Complaint profile not found. Please verify the ID.");
+      }
+    } catch (e) {
+      setTrackError(e.message || "Invalid Complaint ID");
     } finally {
       setTracking(false);
     }
   };
 
-  const filtered = allComplaints.filter(c => {
-    if (activeTab === "ALL")            return true;
-    if (activeTab === "PENDING_REVIEW") return ["NEW","PENDING_REVIEW"].includes(c.status);
-    if (activeTab === "IN_PROGRESS")    return ["VERIFIED","ASSIGNED","IN_PROGRESS"].includes(c.status);
-    if (activeTab === "RESOLVED")       return ["RESOLVED","CLOSED"].includes(c.status);
-    return true;
-  }).filter(c =>
-    !search ||
-    c.complaintNumber?.toLowerCase().includes(search.toLowerCase()) ||
-    c.description?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = allComplaints.filter((c) => {
+    const matchTab = activeTab === "ALL" || c.status === activeTab;
+    const q = search.toLowerCase();
+    const matchSearch =
+      !search ||
+      c.description?.toLowerCase().includes(q) ||
+      c.complaintNumber?.toLowerCase().includes(q) ||
+      c.wardName?.toLowerCase().includes(q);
+    return matchTab && matchSearch;
+  });
 
   return (
-    <div style={{ 
-      minHeight: "100vh", 
-      background: "#f9fafb", 
-      padding: "40px 48px", 
-      fontFamily: "'Inter', sans-serif" 
-    }}>
-      <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
-        
-        {/* HEADER SECTION */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "40px" }}>
-          <div>
-            <h1 style={{ margin: "0 0 8px", fontSize: "36px", fontWeight: 900, color: "#1e1b4b", letterSpacing: "-0.5px" }}>
-              Track Grievances
-            </h1>
-            <p style={{ margin: 0, color: "#6b7280", fontSize: "16px", fontWeight: 500 }}>
-              Real-time monitoring of your reported issues.
-            </p>
-          </div>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f8fafc",
+        padding: "100px 48px 60px",
+        fontFamily: "'Inter', sans-serif",
+      }}
+    >
+      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        {/* TOP HEADER */}
+        <div style={{ marginBottom: "40px" }}>
+          <h1
+            style={{
+              fontSize: "36px",
+              fontWeight: 900,
+              color: "#1e1b4b",
+              margin: "0 0 10px",
+            }}
+          >
+            Track Grievances
+          </h1>
+          <p style={{ margin: 0, color: "#6b7280", fontSize: "16px" }}>
+            Monitor the lifecycle of public issues in real-time.
+          </p>
         </div>
 
-        {/* QUICK TRACK BOX */}
+        {/* UNIFIED SEARCH & FILTERS */}
         <div style={{ 
-          background: "linear-gradient(135deg, #4f46e5 0%, #1d4ed8 100%)", 
-          borderRadius: "32px", 
+          background: "#fff", 
+          borderRadius: "24px", 
           padding: "32px", 
-          marginBottom: "48px",
-          boxShadow: "0 20px 50px rgba(79, 70, 229, 0.2)",
-          color: "#fff"
+          boxShadow: "0 10px 40px rgba(0,0,0,0.04)", 
+          marginBottom: "40px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "28px",
+          border: "1px solid #f1f5f9"
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "20px" }}>
-            <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>🔍</div>
-            <div>
-              <div style={{ fontSize: "18px", fontWeight: 800 }}>Instant Status Lookup</div>
-              <div style={{ fontSize: "13px", opacity: 0.8 }}>Enter your unique complaint ID to see detailed lifecycle progress.</div>
+          <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "center" }}>
+            <div style={{ position: "relative", flex: 1, minWidth: "300px" }}>
+              <Search
+                size={20}
+                style={{
+                  position: "absolute",
+                  left: "20px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "#94a3b8",
+                }}
+              />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search history, location or Ward Name..."
+                style={{
+                  width: "100%",
+                  padding: "18px 20px 18px 56px",
+                  border: "2px solid #f1f5f9",
+                  borderRadius: "18px",
+                  fontSize: "15px",
+                  outline: "none",
+                  background: "#f8fafc",
+                  color: "#1e293b",
+                  transition: "all 0.2s",
+                  boxSizing: "border-box"
+                }}
+                onFocus={e => e.target.style.borderColor = "#4f46e5"}
+                onBlur={e => e.target.style.borderColor = "#f1f5f9"}
+              />
+            </div>
+
+            <div style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              background: "#fff", 
+              borderRadius: "18px", 
+              padding: "4px 4px 4px 20px",
+              gap: "12px",
+              border: "2px solid #f1f5f9",
+              minWidth: "250px"
+            }}>
+              <span style={{ fontSize: "13px", fontWeight: 800, color: "#64748b" }}>Track ID</span>
+              <input 
+                value={trackInput}
+                onChange={e => setTrackInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleTrack()}
+                placeholder="CMP-..." 
+                style={{ 
+                  background: "#f8fafc", 
+                  border: "1px solid #e2e8f0", 
+                  borderRadius: "12px", 
+                  padding: "12px 14px", 
+                  color: "#1e293b", 
+                  fontSize: "14px", 
+                  outline: "none",
+                  width: "100px"
+                }}
+              />
+              <button onClick={handleTrack} style={{ 
+                background: "#4f46e5", 
+                border: "none", 
+                borderRadius: "14px", 
+                padding: "14px 24px", 
+                fontWeight: 800, 
+                color: "#fff", 
+                cursor: "pointer",
+                fontSize: "14px",
+                boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)"
+              }}>
+                {tracking ? "..." : "Track"}
+              </button>
             </div>
           </div>
-          <div style={{ display: "flex", gap: "12px" }}>
-            <input
-              value={trackInput}
-              onChange={e => setTrackInput(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleTrack()}
-              placeholder="Enter Complaint ID (e.g. CMP-2025-1045)"
-              style={{ 
-                flex: 1, 
-                padding: "18px 24px", 
-                border: "none", 
-                borderRadius: "16px", 
-                fontSize: "15px", 
-                outline: "none",
-                fontWeight: 600,
-                color: "#1e1b4b",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
-              }}
-            />
-            <button
-              onClick={handleTrack}
-              disabled={tracking}
-              style={{ 
-                padding: "0 36px", 
-                background: "#facc15", 
-                color: "#1e1b4b", 
-                border: "none", 
-                borderRadius: "16px", 
-                cursor: "pointer", 
-                fontWeight: 800,
-                fontSize: "15px",
-                transition: "all 0.2s"
-              }}
-              onMouseOver={e => !tracking && (e.currentTarget.style.transform = "scale(1.05)")}
-              onMouseOut={e => e.currentTarget.style.transform = "none"}
-            >
-              {tracking ? "Searching..." : "Track Now"}
-            </button>
-          </div>
-          {trackError && <div style={{ marginTop: "16px", background: "rgba(255,255,255,0.1)", padding: "10px 16px", borderRadius: "10px", fontSize: "14px", fontWeight: 600 }}>⚠️ {trackError}</div>}
-        </div>
 
-        {/* FILTERS & SEARCH (GRID LAYOUT) */}
-        <div style={{ 
-          display: "grid",
-          gridTemplateColumns: "1fr auto",
-          alignItems: "center", 
-          gap: "24px",
-          marginBottom: "32px",
-          background: "rgba(255,255,255,0.6)", 
-          backdropFilter: "blur(10px)",
-          borderRadius: "24px", 
-          padding: "16px", 
-          border: "1px solid #fff",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-          flexWrap: "wrap"
-        }}>
-          {/* SEARCH */}
-          <div style={{ position: "relative", minWidth: "240px" }}>
-            <span style={{ position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }}>🔍</span>
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search by ID or description..."
-              style={{
-                width: "100%", 
-                padding: "14px 20px 14px 52px",
-                border: "none", 
-                borderRadius: "16px",
-                fontSize: "15px", 
-                outline: "none",
-                background: "#fff",
-                color: "#1f2937",
-                boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)",
-                boxSizing: "border-box"
-              }}
-            />
-          </div>
+          {trackError && (
+            <div style={{ background: "#fef2f2", border: "1px solid #fee2e2", padding: "12px 20px", borderRadius: "14px", color: "#dc2626", fontSize: "14px", fontWeight: 600, display: "flex", alignItems: "center", gap: "10px" }}>
+              <AlertTriangle size={18} /> {trackError}
+            </div>
+          )}
 
-          {/* STATUS TABS */}
-          <div style={{ 
-            display: "flex", 
-            background: "#f3f4f6", 
-            padding: "4px", 
-            borderRadius: "16px",
-            gap: "2px",
-            flexShrink: 0
-          }}>
-            {TABS.map(tab => (
+          {/* STATUS FILTERS */}
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", borderTop: "1px solid #f1f5f9", paddingTop: "24px" }}>
+            <span style={{ fontSize: "12px", fontWeight: 900, color: "#94a3b8", alignSelf: "center", marginRight: "12px", letterSpacing: "0.5px" }}>FILTER:</span>
+            {TABS.map((tab) => (
               <button
                 key={tab.value}
                 onClick={() => setActiveTab(tab.value)}
                 style={{
-                  padding: "10px 24px",
-                  background: activeTab === tab.value ? "#4f46e5" : "transparent",
-                  color: activeTab === tab.value ? "#fff" : "#6b7280",
-                  border: "none",
-                  borderRadius: "12px",
+                  padding: "10px 22px",
+                  background: activeTab === tab.value ? "#4f46e5" : "#fff",
+                  color: activeTab === tab.value ? "#fff" : "#64748b",
+                  border: `1.5px solid ${activeTab === tab.value ? "#4f46e5" : "#e2e8f0"}`,
+                  borderRadius: "100px",
                   cursor: "pointer",
-                  fontSize: "14px",
+                  fontSize: "13px",
                   fontWeight: 700,
                   transition: "all 0.2s",
-                  whiteSpace: "nowrap",
                   display: "flex",
                   alignItems: "center",
-                  gap: "6px"
+                  gap: "8px",
                 }}
               >
-                <span>{tab.icon}</span> {tab.label}
+                {tab.icon} {tab.label}
               </button>
             ))}
           </div>
@@ -229,41 +231,68 @@ export default function TrackPage({ navigate }) {
 
         {/* LIST SECTION */}
         {loading ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "100px 0" }}>
-            <div className="spinner" style={{ width: "40px", height: "40px", border: "4px solid #f3f4f6", borderTop: "4px solid #4f46e5", borderRadius: "50%", animation: "spin 1s linear infinite", marginBottom: "20px" }} />
-            <div style={{ color: "#6b7280", fontWeight: 500 }}>Syncing Ledger...</div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              padding: "100px 0",
+            }}
+          >
+            <div
+              style={{
+                width: "40px",
+                height: "40px",
+                border: "4px solid #f3f4f6",
+                borderTop: "4px solid #4f46e5",
+                borderRadius: "50%",
+                animation: "spin 1s linear infinite",
+                marginBottom: "20px",
+              }}
+            />
+            <div style={{ color: "#6b7280", fontWeight: 500 }}>
+              Syncing Ledger...
+            </div>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+            }}
+          >
             {filtered.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "100px 0", background: "#fff", borderRadius: "32px", border: "2px dashed #e5e7eb" }}>
-                <div style={{ fontSize: "64px", marginBottom: "20px" }}>📋</div>
-                <h3 style={{ fontSize: "20px", color: "#1f2937", margin: "0 0 8px" }}>No complaints found</h3>
-                <p style={{ color: "#6b7280" }}>Try a different category or check your complaint number.</p>
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "80px 0",
+                  background: "#fff",
+                  borderRadius: "32px",
+                  border: "2px dashed #e2e8f0",
+                }}
+              >
+                <FileX
+                  size={48}
+                  color="#94a3b8"
+                  style={{ marginBottom: "16px" }}
+                />
+                <div
+                  style={{ fontSize: "18px", fontWeight: 700, color: "#1e293b" }}
+                >
+                  No records found
+                </div>
+                <div style={{ color: "#64748b", marginTop: "4px" }}>
+                  Try adjusting your search or filters.
+                </div>
               </div>
             ) : (
-              filtered.map(c => (
-                <div key={c.id} style={{ display: "flex", gap: "24px" }}>
-                    {/* Visual Status Marker */}
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "20px" }}>
-                         <div style={{ 
-                             width: "12px", 
-                             height: "12px", 
-                             borderRadius: "50%", 
-                             background: statusConfig[c.status]?.bg || "#4f46e5", 
-                             boxShadow: `0 0 10px ${statusConfig[c.status]?.bg || "#4f46e5"}44`,
-                             zIndex: 1 
-                         }} />
-                         <div style={{ flex: 1, width: "2px", background: "#e5e7eb", margin: "4px 0" }} />
-                    </div>
-                    
-                    <div style={{ flex: 1 }}>
-                        <ComplaintCard 
-                             complaint={c} 
-                             onClick={comp => navigate("details", comp)} 
-                        />
-                    </div>
-                </div>
+              filtered.map((c) => (
+                <ComplaintCard
+                  key={c.id}
+                  complaint={c}
+                  onClick={(comp) => navigate("details", comp)}
+                />
               ))
             )}
           </div>
@@ -271,7 +300,7 @@ export default function TrackPage({ navigate }) {
       </div>
 
       <style>{`
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );

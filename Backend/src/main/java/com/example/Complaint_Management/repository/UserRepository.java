@@ -14,6 +14,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByPhone(String phone);
 
+    Optional<User> findByWardIdAndRole(String wardId, com.example.Complaint_Management.enums.Role role);
+
+    java.util.List<User> findByRole(com.example.Complaint_Management.enums.Role role);
+
     boolean existsByUsername(String username);
 
     boolean existsByPhone(String phone);

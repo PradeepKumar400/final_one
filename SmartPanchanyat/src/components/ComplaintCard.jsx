@@ -1,4 +1,4 @@
-import { StatusBadge, TypeIcon } from "./StatusBadge";
+import { MapPin, Clock, ArrowRight, Construction, Trash2, Building2, Zap, Droplets, FileText, AlertTriangle } from "lucide-react";
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -13,7 +13,6 @@ function timeAgo(dateStr) {
 }
 
 export default function ComplaintCard({ complaint, onClick }) {
-  const isEscalated = complaint.status === "ESCALATED";
   const beforePhoto = complaint.photos?.find(p => p.stage?.toUpperCase() === "BEFORE")?.url;
 
   return (
@@ -21,15 +20,18 @@ export default function ComplaintCard({ complaint, onClick }) {
       onClick={() => onClick && onClick(complaint)}
       style={{
         background: "#fff",
-        borderRadius: "32px",
-        padding: "32px",
+        borderRadius: "20px",
+        padding: "20px",
         boxShadow: "0 10px 40px rgba(0,0,0,0.04)",
         cursor: "pointer",
         border: complaint.isSlaBreached ? "2px solid #fee2e2" : "1px solid #f3f4f6",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         display: "flex",
-        gap: "24px",
-        position: "relative"
+        gap: "20px",
+        position: "relative",
+        minHeight: "180px",
+        height: "180px",
+        boxSizing: "border-box"
       }}
       onMouseEnter={e => { 
         e.currentTarget.style.boxShadow = "0 20px 60px rgba(0,0,0,0.08)"; 
@@ -43,25 +45,24 @@ export default function ComplaintCard({ complaint, onClick }) {
       {/* ICON AREA */}
       <div style={{ flexShrink: 0 }}>
         <div style={{
-          width: "64px",
-          height: "64px",
-          borderRadius: "20px",
+          width: "48px",
+          height: "48px",
+          borderRadius: "14px",
           background: "#fff",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           boxShadow: "0 8px 16px rgba(0,0,0,0.06)",
-          fontSize: "28px"
         }}>
           {getTypeIcon(complaint.type)}
         </div>
       </div>
 
       {/* CONTENT AREA */}
-      <div style={{ flex: 1 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-            <h3 style={{ margin: 0, fontSize: "20px", fontWeight: 800, color: "#1e1b4b" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <h3 style={{ margin: "0 0 4px", fontSize: "17px", fontWeight: 800, color: "#1e1b4b" }}>
               {getSmartTitle(complaint.description, complaint.type)}
             </h3>
             <span style={{ 
@@ -84,75 +85,53 @@ export default function ComplaintCard({ complaint, onClick }) {
                 color: "#ef4444", 
                 padding: "4px 12px", 
                 borderRadius: "100px", 
-                fontSize: "11px", 
+                fontSize: "10px", 
                 fontWeight: 900,
                 textTransform: "uppercase",
-                letterSpacing: "0.5px"
+                letterSpacing: "0.5px",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px"
               }}>
-                ! SLA BREACHED
+                <AlertTriangle size={12} /> SLA
               </span>
             )}
-            {isEscalated && (
-              <button style={{
-                background: "#ef4444",
-                color: "#fff",
-                border: "none",
-                borderRadius: "12px",
-                padding: "8px 20px",
-                fontSize: "13px",
-                fontWeight: 700,
-                cursor: "pointer"
-              }}>
-                Escalated
-              </button>
-            )}
-            <button style={{
-              background: "#fff",
-              color: "#374151",
-              border: "1px solid #e5e7eb",
-              borderRadius: "12px",
-              padding: "8px 20px",
-              fontSize: "13px",
-              fontWeight: 700,
-              cursor: "pointer",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.03)"
-            }}>
-              Assign Team
-            </button>
           </div>
         </div>
 
         {/* METADATA */}
         <div style={{ 
           display: "flex", 
-          gap: "24px", 
-          marginBottom: "16px",
+          gap: "16px", 
+          marginBottom: "10px",
           color: "#6b7280",
-          fontSize: "14px",
+          fontSize: "12px",
           fontWeight: 600
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ fontSize: "16px" }}>📍</span> {complaint.wardName?.split("-")[0] || complaint.wardId}
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <MapPin size={14} /> {complaint.wardName?.split("-")[0] || complaint.wardId}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ fontSize: "16px" }}>🕒</span> {timeAgo(complaint.createdAt)}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ fontSize: "16px" }}>👤</span> {complaint.citizenName || "John Doe (Citizen)"}
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <Clock size={14} /> {timeAgo(complaint.createdAt)}
           </div>
         </div>
 
         {/* DESCRIPTION + PHOTO WRAPPER */}
-        <div style={{ display: "flex", gap: "24px", marginBottom: "24px" }}>
+        <div style={{ display: "flex", gap: "16px", marginBottom: "12px", flex: 1, overflow: "hidden" }}>
           <p style={{ 
             flex: 1,
             margin: 0, 
-            fontSize: "15px", 
+            fontSize: "13px", 
             color: "#4b5563", 
-            lineHeight: "1.6",
-            fontWeight: 500
+            lineHeight: "1.4",
+            fontWeight: 500,
+            display: "-webkit-box",
+            WebkitLineClamp: "3",
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis"
           }}>
-            {complaint.description.length > 220 ? complaint.description.slice(0, 220) + "..." : complaint.description}
+            {complaint.description}
           </p>
           
           {beforePhoto && (
@@ -161,10 +140,10 @@ export default function ComplaintCard({ complaint, onClick }) {
                 src={beforePhoto} 
                 alt="Complaint" 
                 style={{ 
-                  width: "140px", 
-                  height: "100px", 
+                  width: "80px", 
+                  height: "60px", 
                   objectFit: "cover", 
-                  borderRadius: "20px",
+                  borderRadius: "10px",
                   boxShadow: "0 4px 12px rgba(0,0,0,0.08)"
                 }} 
               />
@@ -175,13 +154,14 @@ export default function ComplaintCard({ complaint, onClick }) {
         {/* LINK */}
         <div style={{ 
           color: "#4f46e5", 
-          fontSize: "14px", 
+          fontSize: "13px", 
           fontWeight: 700, 
           display: "flex", 
           alignItems: "center", 
-          gap: "6px" 
+          gap: "6px",
+          marginTop: "auto"
         }}>
-          View Full Details →
+          View Details <ArrowRight size={14} />
         </div>
       </div>
     </div>
@@ -189,15 +169,17 @@ export default function ComplaintCard({ complaint, onClick }) {
 }
 
 function getTypeIcon(type) {
+  const size = 20;
+  const color = "#4f46e5";
   const icons = {
-    INFRASTRUCTURE: "🏢",
-    SANITATION: "🗑️",
-    PUBLIC_SERVICES: "🏛️",
-    ELECTRICITY: "⚡",
-    WATER: "💧",
-    OTHER: "📋"
+    INFRASTRUCTURE: <Construction size={size} color={color} />,
+    SANITATION: <Trash2 size={size} color={color} />,
+    PUBLIC_SERVICES: <Building2 size={size} color={color} />,
+    ELECTRICITY: <Zap size={size} color={color} />,
+    WATER: <Droplets size={size} color={color} />,
+    OTHER: <FileText size={size} color={color} />
   };
-  return icons[type] || "📋";
+  return icons[type] || <FileText size={size} color={color} />;
 }
 
 function getSmartTitle(desc, type) {
@@ -205,4 +187,4 @@ function getSmartTitle(desc, type) {
   const words = desc.split(" ");
   if (words.length > 5) return words.slice(0, 5).join(" ") + "...";
   return desc;
-}
+}

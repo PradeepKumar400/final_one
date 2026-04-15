@@ -178,14 +178,14 @@ export const complaints = [
 ];
 
 export const typeConfig = {
-  WATER: { label: "Water", icon: "💧", color: "#2563eb", bg: "#dbeafe", tamil: "தண்ணீர்" },
-  ELECTRICITY: { label: "Electricity", icon: "⚡", color: "#d97706", bg: "#fef3c7", tamil: "மின்சாரம்" },
-  ROAD: { label: "Road", icon: "🛣️", color: "#6b7280", bg: "#f3f4f6", tamil: "சாலை" },
-  PUBLIC_PROPERTY: { label: "Public Property", icon: "🏛️", color: "#7c3aed", bg: "#ede9fe", tamil: "பொது சொத்து" },
-  SANITATION: { label: "Sanitation", icon: "🗑️", color: "#059669", bg: "#d1fae5", tamil: "சுகாதாரம்" },
-  INFRASTRUCTURE: { label: "Infrastructure", icon: "🛣️", color: "#4f46e5", bg: "#eef2ff", tamil: "கட்டமைப்பு" },
-  PUBLIC_SERVICES: { label: "Public Service", icon: "🏛️", color: "#7c3aed", bg: "#ede9fe", tamil: "பொது சேவை" },
-  OTHER: { label: "Other", icon: "📋", color: "#6b7280", bg: "#f3f4f6", tamil: "மற்றவை" }
+  WATER: { label: "Water", icon: "", color: "#2563eb", bg: "#dbeafe", tamil: "தண்ணீர்" },
+  ELECTRICITY: { label: "Electricity", icon: "", color: "#d97706", bg: "#fef3c7", tamil: "மின்சாரம்" },
+  ROAD: { label: "Road", icon: "", color: "#6b7280", bg: "#f3f4f6", tamil: "சாலை" },
+  PUBLIC_PROPERTY: { label: "Public Property", icon: "", color: "#7c3aed", bg: "#ede9fe", tamil: "பொது சொத்து" },
+  SANITATION: { label: "Sanitation", icon: "", color: "#059669", bg: "#d1fae5", tamil: "சுகாதாரம்" },
+  INFRASTRUCTURE: { label: "Infrastructure", icon: "", color: "#4f46e5", bg: "#eef2ff", tamil: "கட்டமைப்பு" },
+  PUBLIC_SERVICES: { label: "Public Service", icon: "", color: "#7c3aed", bg: "#ede9fe", tamil: "பொது சேவை" },
+  OTHER: { label: "Other", icon: "", color: "#6b7280", bg: "#f3f4f6", tamil: "மற்றவை" }
 };
 
 export const statusConfig = {

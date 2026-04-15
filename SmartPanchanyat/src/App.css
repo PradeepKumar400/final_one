@@ -2,27 +2,10 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f9fafb;
-  color: #111827;
 }
 
 .main-content {
   flex: 1;
-}
-
-/* Ensure global font matches the project style */
-body {
-  font-family: 'IBM Plex Sans', 'Inter', system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-button {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-button:active {
-  transform: scale(0.98);
 }
 
 img {
@@ -30,7 +13,7 @@ img {
   height: auto;
 }
 
-/* Scrollbar styling for a more premium feel */
+/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -45,5 +28,5 @@ img {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: #4955b3;
 }

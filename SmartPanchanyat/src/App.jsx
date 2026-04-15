@@ -1,90 +1,192 @@
-import { useState } from 'react'
-import Navbar from './components/Navbar'
-import HomePage from './components/HomePage'
-import ComplaintsPage from './components/ComplaintsPage'
-import ComplaintDetailPage from './components/ComplaintDetailPage'
-import RaiseIssuePage from './components/RaiseIssuePage'
-import TrackPage from './components/TrackPage'
-import LoginPage from './components/LoginPage'
-import RegisterPage from './components/RegisterPage'
-import AdminDashboard from './components/AdminDashboard'
-import WardDashboard from './components/WardDashboard'
-import { getUser, isLoggedIn, logout } from './utils/api'
-import './App.css'
+import { useState } from "react";
+import Navbar from "./components/Navbar";
+import HomePage from "./components/HomePage";
+import ComplaintsPage from "./components/ComplaintsPage";
+import ComplaintDetailPage from "./components/ComplaintDetailPage";
+import RaiseIssuePage from "./components/RaiseIssuePage";
+import TrackPage from "./components/TrackPage";
+import LoginPage from "./components/LoginPage";
+import RegisterPage from "./components/RegisterPage";
+import AdminDashboard from "./components/AdminDashboard";
+import WardDashboard from "./components/WardDashboard";
+import { getUser, logout } from "./utils/api";
+import { CircleDollarSign, Map as MapIcon } from "lucide-react";
+import "./App.css";
 
 function App() {
-  const [currentPage, setCurrentPage]       = useState('home')
-  const [selectedComplaint, setSelectedComplaint] = useState(null)
-  const [authUser, setAuthUser]             = useState(getUser)  // read from localStorage
+  const [currentPage, setCurrentPage] = useState("home");
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [authUser, setAuthUser] = useState(getUser);
 
   const navigate = (page, data = null) => {
-    setCurrentPage(page)
-    if (data) setSelectedComplaint(data)
-    window.scrollTo(0, 0)
-  }
+    setCurrentPage(page);
+    if (data) setSelectedComplaint(data);
+    window.scrollTo(0, 0);
+  };
 
   const handleLogin = (data) => {
-    setAuthUser(data)
-  }
+    setAuthUser(data);
+  };
 
   const handleLogout = () => {
-    logout()
-    setAuthUser(null)
-    navigate('home')
-  }
+    logout();
+    setAuthUser(null);
+    navigate("home");
+  };
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'home':
-        return <HomePage navigate={navigate} />
-      case 'complaints':
-        return <ComplaintsPage navigate={navigate} />
-      case 'details':
-        return <ComplaintDetailPage complaint={selectedComplaint} navigate={navigate} />
-      case 'raise':
-        return <RaiseIssuePage navigate={navigate} />
-      case 'track':
-        return <TrackPage navigate={navigate} />
-
-      // ── Staff portals ──────────────────────────────────────────────────────
-      case 'login':
-        return <LoginPage navigate={navigate} onLogin={handleLogin} />
-      case 'register':
-        return <RegisterPage navigate={navigate} />
-      case 'admin':
-        return authUser?.role === 'ADMIN'
-          ? <AdminDashboard navigate={navigate} />
-          : <LoginPage navigate={navigate} onLogin={handleLogin} />
-      case 'ward':
-        return authUser?.role === 'WARD_MEMBER'
-          ? <WardDashboard navigate={navigate} />
-          : <LoginPage navigate={navigate} onLogin={handleLogin} />
-
-      // ── Placeholder pages ──────────────────────────────────────────────────
-      case 'funds':
+      case "home":
+        return <HomePage navigate={navigate} />;
+      case "complaints":
+        return <ComplaintsPage navigate={navigate} />;
+      case "details":
         return (
-          <div style={{ padding: "80px 24px", textAlign: "center" }}>
-            <div style={{ fontSize: "48px", marginBottom: "20px" }}>💰</div>
-            <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#111827" }}>Funds Tracking</h2>
-            <p style={{ color: "#6b7280" }}>Transparency in budget allocation coming soon.</p>
-          </div>
-        )
-      case 'map':
+          <ComplaintDetailPage
+            key={selectedComplaint?.id || "empty"}
+            complaint={selectedComplaint}
+            navigate={navigate}
+          />
+        );
+      case "raise":
+        return <RaiseIssuePage navigate={navigate} />;
+      case "track":
+        return <TrackPage navigate={navigate} />;
+
+      case "login":
+        return <LoginPage navigate={navigate} onLogin={handleLogin} />;
+      case "register":
+        return <RegisterPage navigate={navigate} />;
+      case "admin":
+        return authUser?.role === "ADMIN" ? (
+          <AdminDashboard navigate={navigate} />
+        ) : (
+          <LoginPage navigate={navigate} onLogin={handleLogin} />
+        );
+      case "ward":
+        return authUser?.role === "WARD_MEMBER" ? (
+          <WardDashboard navigate={navigate} />
+        ) : (
+          <LoginPage navigate={navigate} onLogin={handleLogin} />
+        );
+
+      case "funds":
         return (
-          <div style={{ padding: "80px 24px", textAlign: "center" }}>
-            <div style={{ fontSize: "48px", marginBottom: "20px" }}>🗺️</div>
-            <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#111827" }}>Geospatial Overview</h2>
-            <p style={{ color: "#6b7280" }}>Interactive ward map coming soon.</p>
+          <div
+            style={{
+              padding: "120px 24px",
+              textAlign: "center",
+              background: "#f8fafc",
+              minHeight: "60vh",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginBottom: "32px",
+              }}
+            >
+              <div
+                style={{
+                  width: "80px",
+                  height: "80px",
+                  background: "#dcfce7",
+                  color: "#166534",
+                  borderRadius: "24px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <CircleDollarSign size={40} />
+              </div>
+            </div>
+            <h2
+              style={{
+                fontSize: "32px",
+                fontWeight: 800,
+                color: "#1e1b4b",
+                marginBottom: "12px",
+              }}
+            >
+              Funds Tracking
+            </h2>
+            <p
+              style={{
+                color: "#64748b",
+                maxWidth: "400px",
+                margin: "0 auto",
+                lineHeight: 1.6,
+              }}
+            >
+              Real-time transparency in budget allocation and expenditure is
+              being integrated into the ledger. Coming soon.
+            </p>
           </div>
-        )
+        );
+      case "map":
+        return (
+          <div
+            style={{
+              padding: "120px 24px",
+              textAlign: "center",
+              background: "#f8fafc",
+              minHeight: "60vh",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginBottom: "32px",
+              }}
+            >
+              <div
+                style={{
+                  width: "80px",
+                  height: "80px",
+                  background: "#dbeafe",
+                  color: "#1e40af",
+                  borderRadius: "24px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <MapIcon size={40} />
+              </div>
+            </div>
+            <h2
+              style={{
+                fontSize: "32px",
+                fontWeight: 800,
+                color: "#1e1b4b",
+                marginBottom: "12px",
+              }}
+            >
+              Geospatial Overview
+            </h2>
+            <p
+              style={{
+                color: "#64748b",
+                maxWidth: "400px",
+                margin: "0 auto",
+                lineHeight: 1.6,
+              }}
+            >
+              Spatial data visualization for ward-level issues and service
+              coverage maps is in development. Coming soon.
+            </p>
+          </div>
+        );
       default:
-        return <HomePage navigate={navigate} />
+        return <HomePage navigate={navigate} />;
     }
-  }
+  };
 
-  // Login page has its own full-screen layout — no navbar/footer
-  if (currentPage === 'login') {
-    return <LoginPage navigate={navigate} onLogin={handleLogin} />
+  if (currentPage === "login") {
+    return <LoginPage navigate={navigate} onLogin={handleLogin} />;
   }
 
   return (
@@ -95,20 +197,10 @@ function App() {
         authUser={authUser}
         onLogout={handleLogout}
       />
-      <main className="main-content">
-        {renderPage()}
-      </main>
-      <footer style={{
-        padding: "32px 24px",
-        textAlign: "center",
-        borderTop: "1px solid #e5e7eb",
-        color: "#9ca3af",
-        fontSize: "14px"
-      }}>
-        © 2026 SmartPanchayat — Citizen Complaint Management System
-      </footer>
+      <main className="main-content">{renderPage()}</main>
+     
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

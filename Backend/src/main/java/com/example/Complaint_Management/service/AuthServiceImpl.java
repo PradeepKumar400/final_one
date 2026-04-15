@@ -33,7 +33,7 @@ public class AuthServiceImpl implements AuthService {
                     "Username already taken: " + request.getUsername());
         }
 
-        if (request.getPhone() != null && userRepository.existsByPhone(request.getPhone())) {
+        if (request.getPhone() != null && !request.getPhone().isBlank() && userRepository.existsByPhone(request.getPhone())) {
             throw new InvalidOperationException(
                     "Phone already registered: " + request.getPhone());
         }
@@ -45,14 +45,18 @@ public class AuthServiceImpl implements AuthService {
                     "wardId is required when registering a WARD_MEMBER");
         }
 
+        String phone = (request.getPhone() != null && !request.getPhone().isBlank()) ? request.getPhone() : null;
+        String wardId = (request.getWardId() != null && !request.getWardId().isBlank()) ? request.getWardId() : null;
+        String wardName = (request.getWardName() != null && !request.getWardName().isBlank()) ? request.getWardName() : null;
+
         User user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
-                .phone(request.getPhone())
+                .phone(phone)
                 .role(request.getRole())
-                .wardId(request.getWardId())
-                .wardName(request.getWardName())
+                .wardId(wardId)
+                .wardName(wardName)
                 .enabled(true)
                 .build();
 
@@ -69,23 +73,28 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+        try {
+            User user = userRepository.findByUsername(request.getUsername())
+                    .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
-        if (!user.isEnabled()) {
-            throw new BadCredentialsException("Account is disabled");
+            if (!user.isEnabled()) {
+                throw new BadCredentialsException("Account is disabled");
+            }
+
+            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                throw new BadCredentialsException("Invalid credentials");
+            }
+
+            String token = jwtService.generateToken(
+                    user.getId(), user.getUsername(), user.getPhone(),
+                    user.getWardId(), user.getRole().name());
+
+            log.info("{} logged in: {}", user.getRole(), user.getUsername());
+            return buildResponse(user, token);
+        } catch (Exception e) {
+            log.error("Login failed for user {}: {}", request.getUsername(), e.getMessage(), e);
+            throw e;
         }
-
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new BadCredentialsException("Invalid credentials");
-        }
-
-        String token = jwtService.generateToken(
-                user.getId(), user.getUsername(), user.getPhone(),
-                user.getWardId(), user.getRole().name());
-
-        log.info("{} logged in: {}", user.getRole(), user.getUsername());
-        return buildResponse(user, token);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
