@@ -1,5 +1,7 @@
 package com.example.Complaint_Management.service;
 
+import com.example.Complaint_Management.blockchain.service.WalletService;
+
 import com.example.Complaint_Management.config.JwtService;
 import com.example.Complaint_Management.dto.Request.LoginRequest;
 import com.example.Complaint_Management.dto.Request.RegisterRequest;
@@ -7,7 +9,9 @@ import com.example.Complaint_Management.dto.Response.AuthResponse;
 import com.example.Complaint_Management.entity.User;
 import com.example.Complaint_Management.enums.Role;
 import com.example.Complaint_Management.exception.InvalidOperationException;
+import com.example.Complaint_Management.repository.ComplaintRepository;
 import com.example.Complaint_Management.repository.UserRepository;
+import com.example.Complaint_Management.enums.ComplaintStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -24,6 +28,8 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final WalletService walletService;
+    private final ComplaintRepository complaintRepository;
 
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -46,7 +52,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String phone = (request.getPhone() != null && !request.getPhone().isBlank()) ? request.getPhone() : null;
-        String wardId = (request.getWardId() != null && !request.getWardId().isBlank()) ? request.getWardId() : null;
+        String wardId = (request.getWardId() != null && !request.getWardId().isBlank()) ? request.getWardId().toUpperCase().trim() : null;
         String wardName = (request.getWardName() != null && !request.getWardName().isBlank()) ? request.getWardName() : null;
 
         User user = User.builder()
@@ -60,6 +66,21 @@ public class AuthServiceImpl implements AuthService {
                 .enabled(true)
                 .build();
 
+        // --- Module 1: Wallet Provisioning ---
+        String generatedPrivateKey = null;
+        if (request.getRole() == Role.ADMIN || request.getRole() == Role.PRESIDENT || request.getRole() == Role.WARD_MEMBER) {
+            try {
+                WalletService.WalletKeyPair wallet = walletService.generateWallet();
+                user.setWalletId(wallet.getWalletId());
+                user.setPublicKey(wallet.getPublicKey());
+                user.setWalletActive(true);
+                generatedPrivateKey = wallet.getPrivateKey();
+                log.info("Provisioned blockchain wallet for {}: {}", user.getUsername(), wallet.getWalletId());
+            } catch (Exception e) {
+                log.error("Failed to generate blockchain wallet for user {}", user.getUsername(), e);
+            }
+        }
+
         user = userRepository.save(user);
         log.info("Registered new {} account: {}", user.getRole(), user.getUsername());
 
@@ -67,7 +88,9 @@ public class AuthServiceImpl implements AuthService {
                 user.getId(), user.getUsername(), user.getPhone(),
                 user.getWardId(), user.getRole().name());
 
-        return buildResponse(user, token);
+        AuthResponse response = buildResponse(user, token);
+        response.setPrivateKey(generatedPrivateKey); // Only returned once at registration
+        return response;
     }
 
     @Override
@@ -106,8 +129,28 @@ public class AuthServiceImpl implements AuthService {
                 .username(user.getUsername())
                 .fullName(user.getFullName())
                 .role(user.getRole())
-                .wardId(user.getWardId())
+                .wardId(user.getWardId() != null ? user.getWardId().toUpperCase().trim() : null)
                 .wardName(user.getWardName())
+                .walletId(user.getWalletId())
+                .publicKey(user.getPublicKey())
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<AuthResponse> listStaff() {
+        return userRepository.findAll().stream()
+                .filter(u -> u.getRole() != Role.CITIZEN)
+                .map(u -> {
+                    AuthResponse res = buildResponse(u, null);
+                    if (u.getRole() == Role.WARD_MEMBER && u.getWardId() != null) {
+                        res.setPendingComplaintsCount(
+                            complaintRepository.countByWardIdAndStatus(u.getWardId(), ComplaintStatus.NEW) +
+                            complaintRepository.countByWardIdAndStatus(u.getWardId(), ComplaintStatus.PENDING_REVIEW)
+                        );
+                    }
+                    return res;
+                })
+                .collect(java.util.stream.Collectors.toList());
     }
 }

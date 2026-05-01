@@ -24,4 +24,10 @@ public class AuthResponse {
     private Role role;
     private String wardId;    // null for ADMIN
     private String wardName;  // null for ADMIN
+
+    // --- Module 1: Blockchain Wallet Info (Returned once during registration) ---
+    private String walletId;
+    private String privateKey;
+    private String publicKey;
+    private Long pendingComplaintsCount;
 }

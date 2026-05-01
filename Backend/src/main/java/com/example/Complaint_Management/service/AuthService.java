@@ -16,4 +16,9 @@ public interface AuthService {
      * Authenticate username + password → JWT.
      */
     AuthResponse login(LoginRequest request);
+
+    /**
+     * List all official staff (Admins, Presidents, Ward Members).
+     */
+    java.util.List<AuthResponse> listStaff();
 }

@@ -38,6 +38,8 @@ public interface ComplaintService {
 
     ComplaintResponse acknowledgeComplaint(UUID complaintId, UUID wardMemberId, String wardMemberName);
 
+    ComplaintResponse verifyByWardMember(UUID complaintId, VerifyRequest request, UUID wardMemberId, String wardMemberName);
+
     ComplaintResponse updateProgress(UUID complaintId, ProgressUpdateRequest request,
                                      UUID wardMemberId, String wardMemberName, String role);
 

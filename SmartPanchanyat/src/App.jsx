@@ -9,6 +9,7 @@ import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
 import AdminDashboard from "./components/AdminDashboard";
 import WardDashboard from "./components/WardDashboard";
+import ProfilePage from "./components/ProfilePage";
 import FundsPage from "./components/blockchain/FundsPage";
 import { getUser, logout } from "./utils/api";
 import { CircleDollarSign, Map as MapIcon } from "lucide-react";
@@ -73,6 +74,8 @@ function App() {
 
       case "funds":
         return <FundsPage navigate={navigate} />;
+      case "profile":
+        return <ProfilePage user={authUser} navigate={navigate} />;
       case "map":
         return (
           <div

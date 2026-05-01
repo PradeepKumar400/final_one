@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  wardListComplaints, wardAcknowledge, wardUpdateProgress,
+  wardListComplaints, wardAcknowledge, wardVerify, wardUpdateProgress,
   wardComment, mapComplaint, getUser, getNotifications
 } from "../utils/api";
 import { 
@@ -43,6 +43,7 @@ export default function WardDashboard({ navigate }) {
   const [filterStatus, setFilterStatus] = useState("");
   const [expanded, setExpanded]       = useState(null);
 
+  const [verifyModal, setVerifyModal]     = useState(null);
   const [progressModal, setProgressModal] = useState(null);
   const [commentModal, setCommentModal]   = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -85,6 +86,16 @@ export default function WardDashboard({ navigate }) {
     finally { setActionLoading(false); }
   };
 
+  const doVerify = async (id, approved, reason, priority) => {
+    setActionLoading(true); setActionError(null);
+    try {
+      await wardVerify(id, { approved, rejectionReason: reason, priority });
+      setVerifyModal(null);
+      load();
+    } catch (e) { setActionError(e.message); }
+    finally { setActionLoading(false); }
+  };
+
   const doProgress = async (id, status, notes, remarks) => {
     setActionLoading(true); setActionError(null);
     try {
@@ -104,6 +115,7 @@ export default function WardDashboard({ navigate }) {
   };
 
   const counts = {
+    TOTAL:       complaints.length,
     NEW:         complaints.filter(c => c.status === "NEW").length,
     PENDING:     complaints.filter(c => c.status === "PENDING_REVIEW").length,
     IN_PROGRESS: complaints.filter(c => ["ASSIGNED","IN_PROGRESS"].includes(c.status)).length,
@@ -161,6 +173,7 @@ export default function WardDashboard({ navigate }) {
       {/* Summary cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginBottom: "32px" }}>
         {[
+          { label: "Total Issues", v: counts.TOTAL, icon: <FileText size={20} />, color: "#4f46e5", bg: "#e0e7ff" },
           { label: "New Issues", v: counts.NEW, icon: <Clock size={20} />, color: "#1d4ed8", bg: "#eff6ff" },
           { label: "Pending",     v: counts.PENDING, icon: <Clock size={20} />, color: "#92400e", bg: "#fffbeb" },
           { label: "Active",      v: counts.IN_PROGRESS, icon: <Activity size={20} />, color: "#c2410c", bg: "#fff7ed" },
@@ -250,8 +263,18 @@ export default function WardDashboard({ navigate }) {
             {/* Action buttons */}
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", borderTop: "1px solid #f3f4f6", paddingTop: "16px" }}>
               {c.status === "NEW" && (
-                <ActionBtn bg="#eff6ff" color="#1d4ed8" onClick={() => doAcknowledge(c.id)} disabled={actionLoading}>
-                  <CheckCircle size={14} /> Acknowledge
+                <>
+                  <ActionBtn bg="#eff6ff" color="#1d4ed8" onClick={() => doAcknowledge(c.id)} disabled={actionLoading}>
+                    <CheckCircle size={14} /> Acknowledge
+                  </ActionBtn>
+                  <ActionBtn bg="#ecfdf5" color="#065f46" onClick={() => setVerifyModal(c)} disabled={actionLoading}>
+                    <ShieldCheck size={14} /> Verify Issue
+                  </ActionBtn>
+                </>
+              )}
+              {c.status === "PENDING_REVIEW" && (
+                <ActionBtn bg="#ecfdf5" color="#065f46" onClick={() => setVerifyModal(c)} disabled={actionLoading}>
+                  <ShieldCheck size={14} /> Verify Issue
                 </ActionBtn>
               )}
               {["VERIFIED", "ASSIGNED", "IN_PROGRESS"].includes(c.status) && (
@@ -333,6 +356,16 @@ export default function WardDashboard({ navigate }) {
       })}
 
       {/* MODALS */}
+      {verifyModal && (
+        <VerifyModal
+          complaint={verifyModal}
+          onClose={() => setVerifyModal(null)}
+          onSubmit={(approved, reason, priority) => doVerify(verifyModal.id, approved, reason, priority)}
+          loading={actionLoading}
+          error={actionError}
+        />
+      )}
+
       {progressModal && (
         <ProgressModal
           complaint={progressModal}
@@ -488,6 +521,90 @@ function CommentModal({ complaint, onClose, onSubmit, loading, error }) {
       <button onClick={() => onSubmit(message, isPublic)} disabled={loading || !message.trim()}
         style={{ width: "100%", padding: "16px", background: "#1d4ed8", color: "#fff", border: "none", borderRadius: "14px", cursor: "pointer", fontWeight: 800, fontFamily: "inherit", fontSize: "15px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
         <MessageSquare size={18} /> {loading ? "Dispatching..." : "Post Collaboration Note"}
+      </button>
+    </Modal>
+  );
+}
+
+function VerifyModal({ complaint, onClose, onSubmit, loading, error }) {
+  const [approved, setApproved] = useState(true);
+  const [reason, setReason] = useState("");
+  const [priority, setPriority] = useState("NORMAL");
+
+  const inputStyle = {
+    width: "100%", padding: "12px 14px", border: "1px solid #e5e7eb",
+    borderRadius: "12px", fontSize: "14px", fontFamily: "inherit", outline: "none",
+    boxSizing: "border-box", background: "#f9fafb"
+  };
+
+  return (
+    <Modal title={`Verify Complaint — ${complaint.complaintNumber}`} onClose={onClose}>
+      {error && <div style={{ background: "#fef2f2", borderRadius: "10px", padding: "12px", marginBottom: "16px", fontSize: "13px", color: "#b91c1c" }}>{error}</div>}
+      
+      <div style={{ display: "flex", gap: "12px", marginBottom: "20px" }}>
+        {[true, false].map((v) => (
+          <button
+            key={v ? "Approve" : "Reject"}
+            onClick={() => setApproved(v)}
+            style={{
+              flex: 1, padding: "12px", borderRadius: "12px",
+              border: `2px solid ${approved === v ? (v ? "#10b981" : "#ef4444") : "#f3f4f6"}`,
+              background: approved === v ? (v ? "#ecfdf5" : "#fef2f2") : "#f9fafb",
+              color: approved === v ? (v ? "#065f46" : "#991b1b") : "#4b5563",
+              cursor: "pointer", fontWeight: 800, fontFamily: "inherit", fontSize: "14px",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+            }}
+          >
+            {v ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+            {v ? "Approve Issue" : "Reject Issue"}
+          </button>
+        ))}
+      </div>
+
+      {approved && (
+        <div style={{ marginBottom: "20px" }}>
+          <label style={labelStyle}>PRIORITY LEVEL</label>
+          <div style={{ display: "flex", gap: "10px" }}>
+            {["LOW", "NORMAL", "URGENT"].map((p) => (
+              <button
+                key={p}
+                onClick={() => setPriority(p)}
+                style={{
+                  flex: 1, padding: "10px", borderRadius: "10px", border: "none",
+                  background: priority === p ? "#1d4ed8" : "#f3f4f6",
+                  color: priority === p ? "#fff" : "#4b5563", cursor: "pointer",
+                  fontWeight: 700, fontSize: "12px"
+                }}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!approved && (
+        <div style={{ marginBottom: "20px" }}>
+          <label style={labelStyle}>REJECTION REASON *</label>
+          <textarea
+            value={reason} onChange={(e) => setReason(e.target.value)} rows={3}
+            placeholder="Why is this complaint being rejected?"
+            style={{ ...inputStyle, resize: "none" }}
+          />
+        </div>
+      )}
+
+      <button
+        onClick={() => onSubmit(approved, reason, priority)}
+        disabled={loading || (!approved && !reason.trim())}
+        style={{
+          width: "100%", padding: "16px",
+          background: approved ? "#10b981" : "#ef4444",
+          color: "#fff", border: "none", borderRadius: "14px", cursor: "pointer",
+          fontWeight: 800, fontFamily: "inherit", fontSize: "15px"
+        }}
+      >
+        {loading ? "Processing..." : approved ? "Confirm & Forward to Admin" : "Reject Complaint"}
       </button>
     </Modal>
   );

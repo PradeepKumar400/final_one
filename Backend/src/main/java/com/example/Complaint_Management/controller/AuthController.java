@@ -75,4 +75,12 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Admin account created", response));
     }
+
+    /**
+     * List all staff — restricted to ADMINs in a real app.
+     */
+    @GetMapping("/staff")
+    public ResponseEntity<ApiResponse<java.util.List<AuthResponse>>> listStaff() {
+        return ResponseEntity.ok(ApiResponse.success("Staff list retrieved", authService.listStaff()));
+    }
 }

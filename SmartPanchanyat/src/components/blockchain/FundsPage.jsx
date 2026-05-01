@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { blockchainApi } from "../../utils/blockchainApi";
 import { getUser } from "../../utils/api";
+import { digitallySign } from "../../utils/blockchainIdentity";
 
 const FundsPage = () => {
   const user = getUser();
@@ -64,13 +65,21 @@ const FundsPage = () => {
   const handleCreateRequest = async (e) => {
     e.preventDefault();
     try {
-      const response = await blockchainApi.submitRequest({
+      const payload = {
         purpose,
         amount: parseFloat(amount),
         wardId
+      };
+
+      // --- Module 1: Digital Signature ---
+      const signature = await digitallySign(payload, user.privateKey);
+      
+      const response = await blockchainApi.submitRequest({
+        ...payload,
+        signature // Sending signature to blockchain
       });
       if (response.success) {
-        alert("Fund Request Submitted to Blockchain!\nTransaction ID: " + response.transactionId);
+        alert("Fund Request Digitally Signed & Submitted!\nTransaction ID: " + response.transactionId);
         setShowForm(false);
         setPurpose("");
         setAmount("");
@@ -84,13 +93,21 @@ const FundsPage = () => {
 
   const handleVote = async (id, voteType) => {
     try {
-      const response = await blockchainApi.castVote(id, { 
+      const payload = { 
         vote: voteType,
         wardMemberId: user.userId || "anonymous-voter",
         timestamp: new Date().toISOString()
+      };
+
+      // --- Module 1: Digital Signature ---
+      const signature = await digitallySign(payload, user.privateKey);
+
+      const response = await blockchainApi.castVote(id, { 
+        ...payload,
+        signature // Sending signature to blockchain
       });
       if (response.success) {
-        alert(`Vote [${voteType}] recorded on blockchain!`);
+        alert(`Vote Digitally Signed & Recorded!`);
         fetchFunds();
       }
     } catch (error) {
@@ -176,9 +193,15 @@ const FundsPage = () => {
             <ShieldCheck size={32} color="#4f46e5" />
             <h1 style={{ fontSize: "32px", fontWeight: 800, color: "#1e1b4b", margin: 0 }}>Blockchain Fund Governance</h1>
           </div>
-          <p style={{ color: "#64748b", fontSize: "16px", maxWidth: "600px" }}>
+          <p style={{ color: "#64748b", fontSize: "16px", maxWidth: "600px", marginBottom: "12px" }}>
             Transparent, immutable record of panchayat funds. Every rupee is tracked and approved via 51% democratic consensus.
           </p>
+          {user?.walletId && (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "#f1f5f9", padding: "6px 12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+              <ShieldCheck size={14} color="#4f46e5" />
+              <span style={{ fontSize: "12px", fontWeight: 600, color: "#475569" }}>My Wallet: <span style={{ color: "#4f46e5", fontFamily: "monospace" }}>{user.walletId}</span></span>
+            </div>
+          )}
         </div>
         
         {isPresident && (

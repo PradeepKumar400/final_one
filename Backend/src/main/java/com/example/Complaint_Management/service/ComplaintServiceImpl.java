@@ -41,6 +41,7 @@ public class ComplaintServiceImpl implements ComplaintService {
     private final PhotoService photoService;
     private final ComplaintMapper complaintMapper;
     private final ComplaintNumberGenerator numberGenerator;
+    private final UserRepository userRepository;
 
     @Value("${app.complaint.sla.urgent-hours:24}")
     private int urgentSlaHours;
@@ -62,7 +63,7 @@ public class ComplaintServiceImpl implements ComplaintService {
                 .complaintNumber(complaintNumber)
                 .type(request.getType())
                 .description(request.getDescription())
-                .wardId(request.getWardId())
+                .wardId(request.getWardId().toUpperCase().trim())
                 .citizenId(citizenId)
                 .citizenName(citizenName)
                 .citizenPhone(citizenPhone)
@@ -74,17 +75,26 @@ public class ComplaintServiceImpl implements ComplaintService {
                 .slaDeadline(LocalDateTime.now().plusHours(normalSlaHours))
                 .build();
 
-        complaint = complaintRepository.save(complaint);
+        // SCENARIO LOGIC: Auto-routing to Ward Member
+        String normalizedWardId = request.getWardId().toUpperCase().trim();
+        userRepository.findByWardIdAndRole(normalizedWardId, com.example.Complaint_Management.enums.Role.WARD_MEMBER)
+                .ifPresent(wardMember -> {
+                    complaint.setWardMemberId(wardMember.getId());
+                    log.info("Auto-assigned complaint {} to ward member {} for Ward {}", 
+                            complaintNumber, wardMember.getFullName(), normalizedWardId);
+                });
+
+        Complaint savedComplaint = complaintRepository.save(complaint);
 
         // Log initial status
-        logStatusChange(complaint, null, ComplaintStatus.NEW,
+        logStatusChange(savedComplaint, null, ComplaintStatus.NEW,
                 citizenId, citizenName, "CITIZEN", "Complaint submitted");
 
         // Notify ward member and admin
-        notificationService.notifyNewComplaint(complaint);
+        notificationService.notifyNewComplaint(savedComplaint);
 
         log.info("New complaint created: {} by citizen: {}", complaintNumber, citizenName);
-        return complaintMapper.toResponse(complaint);
+        return complaintMapper.toResponse(savedComplaint);
     }
 
     @Override
@@ -170,9 +180,10 @@ public class ComplaintServiceImpl implements ComplaintService {
     public PagedResponse<ComplaintResponse> getWardComplaints(String wardId,
                                                                ComplaintStatus status,
                                                                Pageable pageable) {
+        String normalizedWardId = wardId.toUpperCase().trim();
         Page<Complaint> page = (status != null)
-                ? complaintRepository.findByWardIdAndStatusOrderByCreatedAtDesc(wardId, status, pageable)
-                : complaintRepository.findByWardIdOrderByCreatedAtDesc(wardId, pageable);
+                ? complaintRepository.findByWardIdAndStatusOrderByCreatedAtDesc(normalizedWardId, status, pageable)
+                : complaintRepository.findByWardIdOrderByCreatedAtDesc(normalizedWardId, pageable);
         return toPagedResponseFull(page);
     }
 
@@ -194,6 +205,41 @@ public class ComplaintServiceImpl implements ComplaintService {
         notificationService.notifyStatusChange(complaint,
                 "உங்கள் புகார் (" + complaint.getComplaintNumber() + ") வார்டு உறுப்பினரால் பெறப்பட்டது.");
 
+        return complaintMapper.toFullResponse(complaint);
+    }
+
+    @Override
+    public ComplaintResponse verifyByWardMember(UUID complaintId, VerifyRequest request, UUID wardMemberId, String wardMemberName) {
+        Complaint complaint = findComplaint(complaintId);
+        // Ward member can verify directly from NEW or after Acknowledgment (PENDING_REVIEW)
+        validateTransition(complaint, ComplaintStatus.NEW, ComplaintStatus.PENDING_REVIEW);
+
+        ComplaintStatus old = complaint.getStatus();
+        
+        if (request.isApproved()) {
+            complaint.setStatus(ComplaintStatus.VERIFIED);
+            
+            logStatusChange(complaint, old, ComplaintStatus.VERIFIED,
+                    wardMemberId, wardMemberName, "WARD_MEMBER", "Verified by ward member");
+            
+            notificationService.notifyStatusChange(complaint,
+                "உங்கள் புகார் (" + complaint.getComplaintNumber() + ") வார்டு உறுப்பினரால் சரிபார்க்கப்பட்டது.");
+        } else {
+            if (request.getRejectionReason() == null || request.getRejectionReason().isBlank()) {
+                throw new InvalidOperationException("Rejection reason is required");
+            }
+            complaint.setStatus(ComplaintStatus.REJECTED);
+            complaint.setRejectionReason(request.getRejectionReason());
+
+            logStatusChange(complaint, old, ComplaintStatus.REJECTED,
+                    wardMemberId, wardMemberName, "WARD_MEMBER", request.getRejectionReason());
+
+            notificationService.notifyStatusChange(complaint,
+                    "உங்கள் புகார் (" + complaint.getComplaintNumber() + ") நிராகரிக்கப்பட்டது: "
+                            + request.getRejectionReason());
+        }
+
+        complaint = complaintRepository.save(complaint);
         return complaintMapper.toFullResponse(complaint);
     }
 

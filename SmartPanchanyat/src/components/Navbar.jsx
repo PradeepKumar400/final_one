@@ -106,7 +106,7 @@ export default function Navbar({ currentPage, navigate, authUser, onLogout }) {
           {isLoggedIn ? (
             <div style={{ display: "flex", alignItems: "center", gap: "12px", borderLeft: `1px solid ${COLORS.outlineVariant}44`, paddingLeft: "24px" }}>
               <div
-                onClick={() => navigate(role === "ADMIN" ? "admin" : "ward")}
+                onClick={() => navigate("profile")}
                 style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}
               >
                 <div style={{

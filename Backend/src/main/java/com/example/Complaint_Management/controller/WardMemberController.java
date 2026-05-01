@@ -81,6 +81,23 @@ public class WardMemberController {
     }
 
     /**
+     * PUT /api/v1/complaints/ward/{id}/verify
+     * Verify a complaint as real — marks it as VERIFIED so admin can assign technician.
+     */
+    @PutMapping("/{id}/verify")
+    public ResponseEntity<ApiResponse<ComplaintResponse>> verify(
+            @PathVariable UUID id,
+            @Valid @RequestBody VerifyRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        ComplaintResponse response = complaintService.verifyByWardMember(
+                id, request, extractId(userDetails), userDetails.getUsername());
+        
+        String message = request.isApproved() ? "Complaint verified as genuine" : "Complaint rejected";
+        return ResponseEntity.ok(ApiResponse.success(message, response));
+    }
+
+    /**
      * PUT /api/v1/complaints/ward/{id}/progress
      * Update status to IN_PROGRESS or RESOLVED with resolution notes.
      */
@@ -140,7 +157,7 @@ public class WardMemberController {
      */
     private void enforceWardAccess(String requestedWardId, UserDetails userDetails) {
         if (userDetails instanceof CustomUserDetails cud && cud.getWardId() != null) {
-            if (!cud.getWardId().equals(requestedWardId)) {
+            if (!cud.getWardId().equalsIgnoreCase(requestedWardId.trim())) {
                 throw new InvalidOperationException(
                         "Access denied: you can only view complaints in your assigned ward ("
                         + cud.getWardId() + ")");

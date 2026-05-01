@@ -51,6 +51,17 @@ public class User {
     @Column(name = "ward_name")
     private String wardName;
 
+    // --- Module 1: Blockchain Wallet & Identity ---
+    @Column(name = "wallet_id", unique = true)
+    private String walletId;
+
+    @Column(name = "public_key", length = 1024)
+    private String publicKey; // Encoded public key for signature verification
+
+    @Column(name = "wallet_active")
+    @Builder.Default
+    private Boolean walletActive = false;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean enabled = true;

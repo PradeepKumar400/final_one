@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import {
   adminListComplaints,
-  adminVerify,
   adminAssign,
   adminEscalate,
   adminComment,
@@ -30,6 +29,7 @@ import {
   BarChart3,
   Search,
   ChevronRight,
+  ShieldCheck,
 } from "lucide-react";
 
 const STATUS_COLOR = {
@@ -105,7 +105,6 @@ export default function AdminDashboard({ navigate }) {
   const [filterPriority, setFilterPriority] = useState("");
 
   // ── Action modal state ───────────────────────────────────────────────────
-  const [verifyModal, setVerifyModal] = useState(null);
   const [assignModal, setAssignModal] = useState(null);
   const [progressModal, setProgressModal] = useState(null);
   const [commentModal, setCommentModal] = useState(null);
@@ -126,6 +125,7 @@ export default function AdminDashboard({ navigate }) {
     loading: false,
     error: null,
     success: null,
+    walletInfo: null, // Module 1: Store generated wallet credentials
   });
 
   const load = async () => {
@@ -137,7 +137,11 @@ export default function AdminDashboard({ navigate }) {
       params.size = 50;
       const data = await adminListComplaints(params);
       const items = Array.isArray(data) ? data : (data?.content ?? []);
-      setComplaints(items.map(mapComplaint));
+      
+      // EXCLUDE 'NEW' and 'PENDING_REVIEW' from Admin view — these are for Ward Members only now
+      const filteredItems = items.filter(c => c.status !== "NEW" && c.status !== "PENDING_REVIEW");
+      
+      setComplaints(filteredItems.map(mapComplaint));
     } catch (e) {
       console.error(e);
     } finally {
@@ -163,13 +167,20 @@ export default function AdminDashboard({ navigate }) {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setRegStatus({ loading: true, error: null, success: null });
+    setRegStatus({
+      loading: true,
+      error: null,
+      success: null,
+      walletInfo: null,
+    });
     try {
-      await registerUser(regForm);
+      const data = await registerUser(regForm);
       setRegStatus({
         loading: false,
         error: null,
-        success: "Staff registered successfully!",
+        success:
+          "Staff registered successfully! Blockchain wallet provisioned.",
+        walletInfo: data,
       });
       setRegForm({
         username: "",
@@ -181,21 +192,12 @@ export default function AdminDashboard({ navigate }) {
         wardName: "",
       });
     } catch (err) {
-      setRegStatus({ loading: false, error: err.message, success: null });
-    }
-  };
-
-  const doVerify = async (id, approved, reason, priority) => {
-    setActionLoading(true);
-    setActionError(null);
-    try {
-      await adminVerify(id, { approved, rejectionReason: reason, priority });
-      setVerifyModal(null);
-      load();
-    } catch (e) {
-      setActionError(e.message);
-    } finally {
-      setActionLoading(false);
+      setRegStatus({
+        loading: false,
+        error: err.message,
+        success: null,
+        walletInfo: null,
+      });
     }
   };
 
@@ -408,11 +410,13 @@ export default function AdminDashboard({ navigate }) {
                 }}
               >
                 <option value="">All Statuses</option>
-                {Object.entries(STATUS_COLOR).map(([v, c]) => (
-                  <option key={v} value={v}>
-                    {c.label}
-                  </option>
-                ))}
+                {Object.entries(STATUS_COLOR)
+                  .filter(([v, c]) => v !== "NEW" && v !== "PENDING_REVIEW")
+                  .map(([v, c]) => (
+                    <option key={v} value={v}>
+                      {c.label}
+                    </option>
+                  ))}
               </select>
             </div>
             <select
@@ -962,6 +966,102 @@ export default function AdminDashboard({ navigate }) {
             </div>
           )}
 
+          {regStatus.walletInfo && regStatus.walletInfo.privateKey && (
+            <div
+              style={{
+                background: "#f0f9ff",
+                border: "1px solid #bae6fd",
+                borderRadius: "16px",
+                padding: "24px",
+                marginBottom: "32px",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  marginBottom: "16px",
+                  color: "#0369a1",
+                }}
+              >
+                <ShieldCheck size={20} />
+                <strong style={{ fontSize: "16px" }}>
+                  Blockchain Wallet Created
+                </strong>
+              </div>
+
+              <div style={{ marginBottom: "12px" }}>
+                <label
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    color: "#64748b",
+                    textTransform: "uppercase",
+                    display: "block",
+                    marginBottom: "4px",
+                  }}
+                >
+                  Wallet ID (Public Address)
+                </label>
+                <div
+                  style={{
+                    background: "#fff",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    border: "1px solid #e2e8f0",
+                    fontFamily: "monospace",
+                    fontSize: "13px",
+                    color: "#1e293b",
+                  }}
+                >
+                  {regStatus.walletInfo.walletId}
+                </div>
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    color: "#e11d48",
+                    textTransform: "uppercase",
+                    display: "block",
+                    marginBottom: "4px",
+                  }}
+                >
+                  Secret Private Key (Copy & Send to User!)
+                </label>
+                <div
+                  style={{
+                    background: "#fff",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    border: "1px solid #fda4af",
+                    fontFamily: "monospace",
+                    fontSize: "12px",
+                    color: "#be123c",
+                    wordBreak: "break-all",
+                  }}
+                >
+                  {regStatus.walletInfo.privateKey}
+                </div>
+                <p
+                  style={{
+                    fontSize: "11px",
+                    color: "#64748b",
+                    marginTop: "8px",
+                    fontStyle: "italic",
+                  }}
+                >
+                  * This key is required for digital signatures. It will never
+                  be shown again.
+                </p>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleRegister}>
             <div
               style={{
@@ -1041,6 +1141,7 @@ export default function AdminDashboard({ navigate }) {
                   style={{ ...inputStyle, height: "46px" }}
                 >
                   <option value="WARD_MEMBER">Ward Member</option>
+                  <option value="PRESIDENT">President</option>
                   <option value="ADMIN">Administrator</option>
                 </select>
               </div>
@@ -1060,15 +1161,22 @@ export default function AdminDashboard({ navigate }) {
               >
                 <div>
                   <label style={labelStyle}>WARD ID / வார்டு எண்</label>
-                  <input
+                  <select
                     required
                     value={regForm.wardId}
                     onChange={(e) =>
                       setRegForm({ ...regForm, wardId: e.target.value })
                     }
-                    placeholder="e.g. WARD-01"
-                    style={{ ...inputStyle, background: "#fff" }}
-                  />
+                    style={{ ...inputStyle, background: "#fff", height: "46px" }}
+                  >
+                    <option value="">Select Ward...</option>
+                    <option value="WARD-01">WARD-01</option>
+                    <option value="WARD-02">WARD-02</option>
+                    <option value="WARD-03">WARD-03</option>
+                    <option value="WARD-04">WARD-04</option>
+                    <option value="WARD-05">WARD-05</option>
+                    <option value="WARD-06">WARD-06</option>
+                  </select>
                 </div>
                 <div>
                   <label style={labelStyle}>WARD NAME / வார்டு பெயர்</label>
@@ -1117,18 +1225,6 @@ export default function AdminDashboard({ navigate }) {
       )}
 
       {/* MODALS */}
-      {verifyModal && (
-        <VerifyModal
-          complaint={verifyModal}
-          onClose={() => setVerifyModal(null)}
-          onSubmit={(approved, reason, priority) =>
-            doVerify(verifyModal.id, approved, reason, priority)
-          }
-          loading={actionLoading}
-          error={actionError}
-        />
-      )}
-
       {assignModal && (
         <AssignModal
           complaint={assignModal}

@@ -27,7 +27,13 @@ export function saveAuth(data) {
     role:     data.role,
     wardId:   data.wardId,
     wardName: data.wardName,
+    walletId: data.walletId,
+    publicKey: data.publicKey,
+    privateKey: data.privateKey || localStorage.getItem("sp_priv") // Retain if already stored
   }));
+  if (data.privateKey) {
+    localStorage.setItem("sp_priv", data.privateKey);
+  }
 }
 
 export function logout() {
@@ -93,6 +99,13 @@ export async function login(username, password) {
  */
 export function registerUser(payload) {
   return post(`${AUTH}/register`, payload, true);
+}
+
+/**
+ * List all staff members (Admin only).
+ */
+export function getStaffList() {
+  return get(`${AUTH}/staff`, true);
 }
 
 // ── Public API (no auth) ───────────────────────────────────────────────────────
@@ -194,6 +207,10 @@ export function wardGetById(id) {
 
 export function wardAcknowledge(id) {
   return put(`${BASE}/complaints/ward/${id}/acknowledge`, undefined);
+}
+
+export function wardVerify(id, data) {
+  return put(`${BASE}/complaints/ward/${id}/verify`, data);
 }
 
 export function wardUpdateProgress(id, status, resolutionNotes, remarks) {
