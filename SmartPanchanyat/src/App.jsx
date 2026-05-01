@@ -9,6 +9,7 @@ import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
 import AdminDashboard from "./components/AdminDashboard";
 import WardDashboard from "./components/WardDashboard";
+import FundsPage from "./components/blockchain/FundsPage";
 import { getUser, logout } from "./utils/api";
 import { CircleDollarSign, Map as MapIcon } from "lucide-react";
 import "./App.css";
@@ -71,60 +72,7 @@ function App() {
         );
 
       case "funds":
-        return (
-          <div
-            style={{
-              padding: "120px 24px",
-              textAlign: "center",
-              background: "#f8fafc",
-              minHeight: "60vh",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                marginBottom: "32px",
-              }}
-            >
-              <div
-                style={{
-                  width: "80px",
-                  height: "80px",
-                  background: "#dcfce7",
-                  color: "#166534",
-                  borderRadius: "24px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <CircleDollarSign size={40} />
-              </div>
-            </div>
-            <h2
-              style={{
-                fontSize: "32px",
-                fontWeight: 800,
-                color: "#1e1b4b",
-                marginBottom: "12px",
-              }}
-            >
-              Funds Tracking
-            </h2>
-            <p
-              style={{
-                color: "#64748b",
-                maxWidth: "400px",
-                margin: "0 auto",
-                lineHeight: 1.6,
-              }}
-            >
-              Real-time transparency in budget allocation and expenditure is
-              being integrated into the ledger. Coming soon.
-            </p>
-          </div>
-        );
+        return <FundsPage navigate={navigate} />;
       case "map":
         return (
           <div

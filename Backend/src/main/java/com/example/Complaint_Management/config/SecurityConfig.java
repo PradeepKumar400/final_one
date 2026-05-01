@@ -64,6 +64,20 @@ public class SecurityConfig {
                 // ── Ward Member endpoints — WARD_MEMBER or ADMIN role allowed ────────
                 .requestMatchers("/api/v1/complaints/ward/**").hasAnyRole("WARD_MEMBER", "ADMIN")
 
+                // ── Blockchain endpoints (Module 1) ───────────────────────────
+                .requestMatchers(HttpMethod.GET, "/api/v1/blockchain/funds/approved").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/blockchain/funds/{id}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/blockchain/funds/{id}/history").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/blockchain/funds/{id}/votes").permitAll()
+                
+                .requestMatchers(HttpMethod.POST, "/api/v1/blockchain/funds/request").hasAnyRole("PRESIDENT", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/blockchain/funds/*/work-order").hasAnyRole("PRESIDENT", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/blockchain/work-orders/*/complete").hasAnyRole("PRESIDENT", "ADMIN", "WARD_MEMBER")
+                
+                .requestMatchers(HttpMethod.POST, "/api/v1/blockchain/funds/*/vote").hasAnyRole("WARD_MEMBER", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/blockchain/funds/pending").hasAnyRole("PRESIDENT", "WARD_MEMBER", "ADMIN")
+                .requestMatchers("/api/v1/blockchain/**").authenticated()
+
                 // ── Health probes ─────────────────────────────────────────────
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
 
@@ -88,8 +102,8 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",   // Vite
-                "http://localhost:3000",   // CRA / other
-                "http://localhost:5174"    // Vite alternate port
+                "http://localhost:3000"   // CRA / other
+                // Vite alternate port
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
