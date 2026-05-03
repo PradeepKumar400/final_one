@@ -30,6 +30,7 @@ import {
   Search,
   ChevronRight,
   ShieldCheck,
+  Database,
 } from "lucide-react";
 
 const STATUS_COLOR = {
@@ -137,10 +138,12 @@ export default function AdminDashboard({ navigate }) {
       params.size = 50;
       const data = await adminListComplaints(params);
       const items = Array.isArray(data) ? data : (data?.content ?? []);
-      
+
       // EXCLUDE 'NEW' and 'PENDING_REVIEW' from Admin view — these are for Ward Members only now
-      const filteredItems = items.filter(c => c.status !== "NEW" && c.status !== "PENDING_REVIEW");
-      
+      const filteredItems = items.filter(
+        (c) => c.status !== "NEW" && c.status !== "PENDING_REVIEW",
+      );
+
       setComplaints(filteredItems.map(mapComplaint));
     } catch (e) {
       console.error(e);
@@ -174,13 +177,26 @@ export default function AdminDashboard({ navigate }) {
       walletInfo: null,
     });
     try {
-      const data = await registerUser(regForm);
+      const { ethers } = await import("ethers");
+      const wallet = ethers.Wallet.createRandom();
+
+      const payload = {
+        ...regForm,
+        walletId: wallet.address,
+        publicKey: wallet.address,
+      };
+
+      await registerUser(payload);
+
       setRegStatus({
         loading: false,
         error: null,
         success:
           "Staff registered successfully! Blockchain wallet provisioned.",
-        walletInfo: data,
+        walletInfo: {
+          address: wallet.address,
+          privateKey: wallet.privateKey,
+        },
       });
       setRegForm({
         username: "",
@@ -326,6 +342,25 @@ export default function AdminDashboard({ navigate }) {
             }}
           >
             <ArrowLeft size={14} /> Citizen View
+          </button>
+          <button
+            onClick={() => navigate("fund-management")}
+            style={{
+              padding: "8px 16px",
+              background: "#10b981",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "13px",
+              fontFamily: "inherit",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              fontWeight: 700,
+            }}
+          >
+            <Database size={14} /> Fund Management
           </button>
         </div>
       </div>
@@ -1016,7 +1051,7 @@ export default function AdminDashboard({ navigate }) {
                     color: "#1e293b",
                   }}
                 >
-                  {regStatus.walletInfo.walletId}
+                  {regStatus.walletInfo.address}
                 </div>
               </div>
 
@@ -1167,7 +1202,11 @@ export default function AdminDashboard({ navigate }) {
                     onChange={(e) =>
                       setRegForm({ ...regForm, wardId: e.target.value })
                     }
-                    style={{ ...inputStyle, background: "#fff", height: "46px" }}
+                    style={{
+                      ...inputStyle,
+                      background: "#fff",
+                      height: "46px",
+                    }}
                   >
                     <option value="">Select Ward...</option>
                     <option value="WARD-01">WARD-01</option>

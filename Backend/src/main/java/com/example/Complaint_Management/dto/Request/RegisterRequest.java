@@ -29,4 +29,8 @@ public class RegisterRequest {
     // Required when role = WARD_MEMBER
     private String wardId;
     private String wardName;
+
+    // Module 1: Blockchain Wallet fields
+    private String walletId;
+    private String publicKey;
 }

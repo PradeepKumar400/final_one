@@ -1,6 +1,5 @@
 package com.example.Complaint_Management.service;
 
-import com.example.Complaint_Management.blockchain.service.WalletService;
 
 import com.example.Complaint_Management.config.JwtService;
 import com.example.Complaint_Management.dto.Request.LoginRequest;
@@ -28,7 +27,6 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final WalletService walletService;
     private final ComplaintRepository complaintRepository;
 
     @Override
@@ -66,18 +64,15 @@ public class AuthServiceImpl implements AuthService {
                 .enabled(true)
                 .build();
 
-        // --- Module 1: Wallet Provisioning ---
-        String generatedPrivateKey = null;
+        // --- Module 1: Wallet Provisioning (Using provided Ethers.js generated credentials) ---
         if (request.getRole() == Role.ADMIN || request.getRole() == Role.PRESIDENT || request.getRole() == Role.WARD_MEMBER) {
-            try {
-                WalletService.WalletKeyPair wallet = walletService.generateWallet();
-                user.setWalletId(wallet.getWalletId());
-                user.setPublicKey(wallet.getPublicKey());
+            if (request.getWalletId() != null && request.getPublicKey() != null) {
+                user.setWalletId(request.getWalletId());
+                user.setPublicKey(request.getPublicKey());
                 user.setWalletActive(true);
-                generatedPrivateKey = wallet.getPrivateKey();
-                log.info("Provisioned blockchain wallet for {}: {}", user.getUsername(), wallet.getWalletId());
-            } catch (Exception e) {
-                log.error("Failed to generate blockchain wallet for user {}", user.getUsername(), e);
+                log.info("Registered blockchain wallet for {}: {}", user.getUsername(), user.getWalletId());
+            } else {
+                log.warn("No wallet credentials provided for {}", user.getUsername());
             }
         }
 
@@ -89,7 +84,6 @@ public class AuthServiceImpl implements AuthService {
                 user.getWardId(), user.getRole().name());
 
         AuthResponse response = buildResponse(user, token);
-        response.setPrivateKey(generatedPrivateKey); // Only returned once at registration
         return response;
     }
 
