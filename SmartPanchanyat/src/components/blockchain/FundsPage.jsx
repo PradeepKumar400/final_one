@@ -442,7 +442,7 @@ const FundsPage = ({ navigate }) => {
     <div
       style={{
         maxWidth: "1200px",
-        margin: "0 auto",
+        margin: "45px auto",
         padding: "40px 20px",
         fontFamily: "'Inter', sans-serif",
       }}

@@ -107,7 +107,7 @@ export default function PublicFeed() {
   return (
     <div style={{ 
       maxWidth: 900, 
-      margin: "40px auto", 
+      margin: "75px auto", 
       padding: "0 24px",
       fontFamily: "'Manrope', sans-serif"
     }}>

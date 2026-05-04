@@ -34,6 +34,8 @@ import {
   ChevronRight,
   ShieldCheck,
   Database,
+  FileText,
+  FileDigit,
 } from "lucide-react";
 
 const STATUS_COLOR = {
