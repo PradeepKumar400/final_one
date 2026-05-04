@@ -8,37 +8,69 @@
 
 const BASE = "http://localhost:8081/api/v1";
 const PUBLIC = `${BASE}/complaints/public`;
-const AUTH   = `${BASE}/auth`;
+const AUTH = `${BASE}/auth`;
 
 // ── Token management ───────────────────────────────────────────────────────────
 
-export function getToken()          { return localStorage.getItem("sp_token"); }
-export function getUser()           { return JSON.parse(localStorage.getItem("sp_user") || "null"); }
-export function isLoggedIn()        { return !!getToken(); }
-export function getRole()           { return getUser()?.role || null; }
-export function getWardId()         { return getUser()?.wardId || null; }
+export function getToken() {
+  return localStorage.getItem("sp_token");
+}
+export function getUser() {
+  return JSON.parse(localStorage.getItem("sp_user") || "null");
+}
+export function isLoggedIn() {
+  return !!getToken();
+}
+export function getRole() {
+  return getUser()?.role || null;
+}
+export function getWardId() {
+  return getUser()?.wardId || null;
+}
 
 export function saveAuth(data) {
   localStorage.setItem("sp_token", data.token);
-  localStorage.setItem("sp_user", JSON.stringify({
-    userId:   data.userId,
-    username: data.username,
-    fullName: data.fullName,
-    role:     data.role,
-    wardId:   data.wardId,
-    wardName: data.wardName,
-    walletId: data.walletId,
-    publicKey: data.publicKey,
-    privateKey: data.privateKey || localStorage.getItem("sp_priv") // Retain if already stored
-  }));
-  if (data.privateKey) {
-    localStorage.setItem("sp_priv", data.privateKey);
+  localStorage.setItem(
+    "sp_user",
+    JSON.stringify({
+      userId: data.userId,
+      username: data.username,
+      fullName: data.fullName,
+      role: data.role,
+      wardId: data.wardId,
+      wardName: data.wardName,
+      walletAddress: data.walletAddress || null,
+      walletStatus: data.walletStatus || "PENDING",
+    }),
+  );
+}
+
+/**
+ * Update the locally cached user with a new wallet address.
+ */
+export function updateLocalWallet(walletAddress) {
+  const user = getUser();
+  if (user) {
+    user.walletAddress = walletAddress;
+    user.walletStatus = "ACTIVE";
+    localStorage.setItem("sp_user", JSON.stringify(user));
   }
 }
 
 export function logout() {
   localStorage.removeItem("sp_token");
   localStorage.removeItem("sp_user");
+}
+
+/**
+ * Save wallet address for a logged-in user (no setup-token needed).
+ */
+export function connectWallet(userId, walletAddress) {
+  return post(
+    `${BASE}/blockchain/identity/connect-wallet`,
+    { userId, walletAddress },
+    true,
+  );
 }
 
 // ── Fetch helpers ─────────────────────────────────────────────────────────────
@@ -108,6 +140,10 @@ export function getStaffList() {
   return get(`${AUTH}/staff`, true);
 }
 
+export function resetWallet(userId) {
+  return post(`${AUTH}/reset-wallet/${userId}`, {}, true);
+}
+
 // ── Public API (no auth) ───────────────────────────────────────────────────────
 
 /**
@@ -136,7 +172,7 @@ export function submitComplaint(payload) {
  */
 export function uploadComplaintPhotos(complaintId, files) {
   const formData = new FormData();
-  files.forEach(file => formData.append("files", file));
+  files.forEach((file) => formData.append("files", file));
 
   return fetch(`${PUBLIC}/${complaintId}/photos`, {
     method: "POST",
@@ -178,18 +214,25 @@ export function adminAssign(id, payload) {
 }
 
 export function adminEscalate(id, reason) {
-  return put(`${BASE}/complaints/admin/${id}/escalate?reason=${encodeURIComponent(reason)}`, undefined);
+  return put(
+    `${BASE}/complaints/admin/${id}/escalate?reason=${encodeURIComponent(reason)}`,
+    undefined,
+  );
 }
 
 export function adminComment(id, message, isPublic = false) {
-  return post(`${BASE}/complaints/admin/${id}/comment`, { message, isPublic }, true);
+  return post(
+    `${BASE}/complaints/admin/${id}/comment`,
+    { message, isPublic },
+    true,
+  );
 }
 
 export function adminAnalytics(wardId, fromDate, toDate) {
   const params = new URLSearchParams();
-  if (wardId)   params.set("wardId", wardId);
+  if (wardId) params.set("wardId", wardId);
   if (fromDate) params.set("fromDate", fromDate);
-  if (toDate)   params.set("toDate", toDate);
+  if (toDate) params.set("toDate", toDate);
   return get(`${BASE}/complaints/admin/analytics?${params}`, true);
 }
 
@@ -214,11 +257,19 @@ export function wardVerify(id, data) {
 }
 
 export function wardUpdateProgress(id, status, resolutionNotes, remarks) {
-  return put(`${BASE}/complaints/ward/${id}/progress`, { status, resolutionNotes, remarks });
+  return put(`${BASE}/complaints/ward/${id}/progress`, {
+    status,
+    resolutionNotes,
+    remarks,
+  });
 }
 
 export function wardComment(id, message, isPublic = true) {
-  return post(`${BASE}/complaints/ward/${id}/comment`, { message, isPublic }, true);
+  return post(
+    `${BASE}/complaints/ward/${id}/comment`,
+    { message, isPublic },
+    true,
+  );
 }
 
 // ── Notifications API ─────────────────────────────────────────────────────────
@@ -236,56 +287,56 @@ export function getNotifications(userId) {
 export function mapComplaint(c) {
   if (!c) return null;
   return {
-    id:                   c.id,
-    complaintNumber:      c.complaintNumber,
-    type:                 c.type,
-    description:          c.description,
-    wardId:               c.wardId,
-    wardName:             c.wardName || c.wardId,
-    status:               c.status,
-    priority:             c.priority || "NORMAL",
-    citizenId:            c.citizenId,
-    citizenName:          c.citizenName || "Anonymous",
-    citizenPhone:         c.citizenPhone || null,    // only present in full response
-    locationDescription:  c.locationDescription || "",
-    latitude:             c.latitude,
-    longitude:            c.longitude,
-    assignedToId:         c.assignedToId || null,    // only in full response
-    assignedToName:       c.assignedToName || null,
-    rejectionReason:      c.rejectionReason || null, // only in full response
-    slaDeadline:          c.slaDeadline,
-    isSlaBreached:        c.isSlaBreached ?? false,
-    resolutionNotes:      c.resolutionNotes || null,
-    citizenRating:        c.citizenRating || null,
-    citizenFeedback:      c.citizenFeedback || null,
-    resolvedAt:           c.resolvedAt || null,
-    createdAt:            c.createdAt,
-    updatedAt:            c.updatedAt,
-    photos: (c.photos || []).map(p => {
+    id: c.id,
+    complaintNumber: c.complaintNumber,
+    type: c.type,
+    description: c.description,
+    wardId: c.wardId,
+    wardName: c.wardName || c.wardId,
+    status: c.status,
+    priority: c.priority || "NORMAL",
+    citizenId: c.citizenId,
+    citizenName: c.citizenName || "Anonymous",
+    citizenPhone: c.citizenPhone || null, // only present in full response
+    locationDescription: c.locationDescription || "",
+    latitude: c.latitude,
+    longitude: c.longitude,
+    assignedToId: c.assignedToId || null, // only in full response
+    assignedToName: c.assignedToName || null,
+    rejectionReason: c.rejectionReason || null, // only in full response
+    slaDeadline: c.slaDeadline,
+    isSlaBreached: c.isSlaBreached ?? false,
+    resolutionNotes: c.resolutionNotes || null,
+    citizenRating: c.citizenRating || null,
+    citizenFeedback: c.citizenFeedback || null,
+    resolvedAt: c.resolvedAt || null,
+    createdAt: c.createdAt,
+    updatedAt: c.updatedAt,
+    photos: (c.photos || []).map((p) => {
       let url = p.url;
       // If it's a local path (e.g. starting with /api/v1), prefix it with our base origin
       if (url && url.startsWith("/api/v1")) {
         url = "http://localhost:8081" + url;
       }
       return {
-        url:   url,
+        url: url,
         stage: p.photoStage || p.stage || "BEFORE",
       };
     }),
-    statusHistory: (c.statusHistory || []).map(h => ({
-      status:        h.newStatus || h.status,
+    statusHistory: (c.statusHistory || []).map((h) => ({
+      status: h.newStatus || h.status,
       changedByName: h.changedByName,
       changedByRole: h.changedByRole,
-      remarks:       h.remarks || "",
-      timestamp:     h.changedAt || h.timestamp,
+      remarks: h.remarks || "",
+      timestamp: h.changedAt || h.timestamp,
     })),
-    comments: (c.comments || []).map(cm => ({
-      id:         cm.id,
-      message:    cm.message,
-      isPublic:   cm.isPublic ?? true,
+    comments: (c.comments || []).map((cm) => ({
+      id: cm.id,
+      message: cm.message,
+      isPublic: cm.isPublic ?? true,
       authorName: cm.authorName,
       authorRole: cm.authorRole,
-      createdAt:  cm.createdAt,
+      createdAt: cm.createdAt,
     })),
   };
 }

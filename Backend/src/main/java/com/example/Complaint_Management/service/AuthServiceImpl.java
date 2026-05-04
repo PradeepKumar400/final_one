@@ -1,12 +1,12 @@
 package com.example.Complaint_Management.service;
 
-
 import com.example.Complaint_Management.config.JwtService;
 import com.example.Complaint_Management.dto.Request.LoginRequest;
 import com.example.Complaint_Management.dto.Request.RegisterRequest;
 import com.example.Complaint_Management.dto.Response.AuthResponse;
 import com.example.Complaint_Management.entity.User;
 import com.example.Complaint_Management.enums.Role;
+import com.example.Complaint_Management.enums.WalletStatus;
 import com.example.Complaint_Management.exception.InvalidOperationException;
 import com.example.Complaint_Management.repository.ComplaintRepository;
 import com.example.Complaint_Management.repository.UserRepository;
@@ -17,6 +17,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +39,8 @@ public class AuthServiceImpl implements AuthService {
                     "Username already taken: " + request.getUsername());
         }
 
-        if (request.getPhone() != null && !request.getPhone().isBlank() && userRepository.existsByPhone(request.getPhone())) {
+        if (request.getPhone() != null && !request.getPhone().isBlank()
+                && userRepository.existsByPhone(request.getPhone())) {
             throw new InvalidOperationException(
                     "Phone already registered: " + request.getPhone());
         }
@@ -50,8 +53,11 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String phone = (request.getPhone() != null && !request.getPhone().isBlank()) ? request.getPhone() : null;
-        String wardId = (request.getWardId() != null && !request.getWardId().isBlank()) ? request.getWardId().toUpperCase().trim() : null;
-        String wardName = (request.getWardName() != null && !request.getWardName().isBlank()) ? request.getWardName() : null;
+        String wardId = (request.getWardId() != null && !request.getWardId().isBlank())
+                ? request.getWardId().toUpperCase().trim()
+                : null;
+        String wardName = (request.getWardName() != null && !request.getWardName().isBlank()) ? request.getWardName()
+                : null;
 
         User user = User.builder()
                 .username(request.getUsername())
@@ -64,16 +70,13 @@ public class AuthServiceImpl implements AuthService {
                 .enabled(true)
                 .build();
 
-        // --- Module 1: Wallet Provisioning (Using provided Ethers.js generated credentials) ---
-        if (request.getRole() == Role.ADMIN || request.getRole() == Role.PRESIDENT || request.getRole() == Role.WARD_MEMBER) {
-            if (request.getWalletId() != null && request.getPublicKey() != null) {
-                user.setWalletId(request.getWalletId());
-                user.setPublicKey(request.getPublicKey());
-                user.setWalletActive(true);
-                log.info("Registered blockchain wallet for {}: {}", user.getUsername(), user.getWalletId());
-            } else {
-                log.warn("No wallet credentials provided for {}", user.getUsername());
-            }
+        // --- Module 1: Blockchain Identity Provisioning ---
+        if (request.getRole() == Role.PRESIDENT || request.getRole() == Role.WARD_MEMBER) {
+            user.setWalletStatus(WalletStatus.PENDING);
+            user.setWalletSetupToken(UUID.randomUUID().toString());
+            log.info("Provisioned setup token for {}: {}", user.getUsername(), user.getWalletSetupToken());
+        } else if (request.getRole() == Role.ADMIN) {
+            user.setWalletStatus(WalletStatus.ACTIVE);
         }
 
         user = userRepository.save(user);
@@ -83,8 +86,7 @@ public class AuthServiceImpl implements AuthService {
                 user.getId(), user.getUsername(), user.getPhone(),
                 user.getWardId(), user.getRole().name());
 
-        AuthResponse response = buildResponse(user, token);
-        return response;
+        return buildResponse(user, token);
     }
 
     @Override
@@ -125,8 +127,9 @@ public class AuthServiceImpl implements AuthService {
                 .role(user.getRole())
                 .wardId(user.getWardId() != null ? user.getWardId().toUpperCase().trim() : null)
                 .wardName(user.getWardName())
-                .walletId(user.getWalletId())
-                .publicKey(user.getPublicKey())
+                .walletStatus(user.getWalletStatus())
+                .walletAddress(user.getWalletAddress())
+                .walletSetupToken(user.getWalletSetupToken())
                 .build();
     }
 
@@ -139,12 +142,26 @@ public class AuthServiceImpl implements AuthService {
                     AuthResponse res = buildResponse(u, null);
                     if (u.getRole() == Role.WARD_MEMBER && u.getWardId() != null) {
                         res.setPendingComplaintsCount(
-                            complaintRepository.countByWardIdAndStatus(u.getWardId(), ComplaintStatus.NEW) +
-                            complaintRepository.countByWardIdAndStatus(u.getWardId(), ComplaintStatus.PENDING_REVIEW)
-                        );
+                                complaintRepository.countByWardIdAndStatus(u.getWardId(), ComplaintStatus.NEW) +
+                                        complaintRepository.countByWardIdAndStatus(u.getWardId(),
+                                                ComplaintStatus.PENDING_REVIEW));
                     }
                     return res;
                 })
                 .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void resetWallet(java.util.UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new InvalidOperationException("User not found"));
+        
+        user.setWalletAddress(null);
+        user.setWalletStatus(WalletStatus.PENDING);
+        user.setWalletSetupToken(java.util.UUID.randomUUID().toString());
+        userRepository.save(user);
+        
+        log.info("Wallet reset for user: {}. Status reverted to PENDING.", user.getUsername());
     }
 }

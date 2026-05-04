@@ -83,4 +83,10 @@ public class AuthController {
     public ResponseEntity<ApiResponse<java.util.List<AuthResponse>>> listStaff() {
         return ResponseEntity.ok(ApiResponse.success("Staff list retrieved", authService.listStaff()));
     }
+    @PostMapping("/reset-wallet/{userId}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> resetWallet(@PathVariable java.util.UUID userId) {
+        authService.resetWallet(userId);
+        return ResponseEntity.ok(ApiResponse.success("Wallet reset successfully. User can now link a new wallet.", null));
+    }
 }

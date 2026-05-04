@@ -1,4 +1,6 @@
-import { Home, ClipboardList, Search, Landmark, Map, LayoutDashboard, UserCircle, LogOut, LogIn, UserPlus } from "lucide-react";
+import { Home, ClipboardList, Search, Landmark, Map, LayoutDashboard, UserCircle, LogOut, LogIn, UserPlus, Wallet } from "lucide-react";
+import ConnectWalletButton from "./ConnectWalletButton";
+import { getToken } from "../utils/api";
 
 const COLORS = {
   primary: "#000b60",
@@ -15,12 +17,14 @@ const COLORS = {
 export default function Navbar({ currentPage, navigate, authUser, onLogout }) {
   const isLoggedIn = !!authUser;
   const role = authUser?.role;
+  const authToken = getToken();
 
   const navItems = [
     { id: "home", label: "Home", icon: <Home size={18} /> },
     { id: "complaints", label: "Complaints", icon: <ClipboardList size={18} /> },
     { id: "track", label: "Track", icon: <Search size={18} /> },
     { id: "funds", label: "Funds", icon: <Landmark size={18} /> },
+    { id: "public-ledger", label: "Public Ledger", icon: <Wallet size={18} /> },
     { id: "map", label: "Map", icon: <Map size={18} /> },
     ...(role === "ADMIN" ? [{ id: "admin", label: "Admin", icon: <LayoutDashboard size={18} color="#dc2626" /> }] : []),
     ...(role === "WARD_MEMBER" ? [{ id: "ward", label: "My Ward", icon: <LayoutDashboard size={18} color="#16a34a" /> }] : []),
@@ -103,6 +107,9 @@ export default function Navbar({ currentPage, navigate, authUser, onLogout }) {
         )}
 
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          {isLoggedIn && (role === "WARD_MEMBER" || role === "PRESIDENT") && (
+            <ConnectWalletButton currentUser={authUser} authToken={authToken} />
+          )}
           {isLoggedIn ? (
             <div style={{ display: "flex", alignItems: "center", gap: "12px", borderLeft: `1px solid ${COLORS.outlineVariant}44`, paddingLeft: "24px" }}>
               <div

@@ -21,4 +21,9 @@ public interface AuthService {
      * List all official staff (Admins, Presidents, Ward Members).
      */
     java.util.List<AuthResponse> listStaff();
+
+    /**
+     * Clear a user's wallet address so they can link a new one.
+     */
+    void resetWallet(java.util.UUID userId);
 }

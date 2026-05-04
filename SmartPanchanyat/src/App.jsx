@@ -11,6 +11,8 @@ import AdminDashboard from "./components/AdminDashboard";
 import WardDashboard from "./components/WardDashboard";
 import ProfilePage from "./components/ProfilePage";
 import FundsPage from "./components/blockchain/FundsPage";
+import WalletSetupPage from "./components/blockchain/WalletSetupPage";
+import PublicFeed from "./components/PublicFeed";
 import { getUser, logout } from "./utils/api";
 import { CircleDollarSign, Map as MapIcon } from "lucide-react";
 import "./App.css";
@@ -25,6 +27,13 @@ function App() {
     if (data) setSelectedComplaint(data);
     window.scrollTo(0, 0);
   };
+
+  useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("token")) {
+      setCurrentPage("setup-wallet");
+    }
+  });
 
   const handleLogin = (data) => {
     setAuthUser(data);
@@ -74,6 +83,10 @@ function App() {
 
       case "funds":
         return <FundsPage navigate={navigate} />;
+      case "setup-wallet":
+        return <WalletSetupPage />;
+      case "public-ledger":
+        return <PublicFeed />;
       case "profile":
         return <ProfilePage user={authUser} navigate={navigate} />;
       case "map":

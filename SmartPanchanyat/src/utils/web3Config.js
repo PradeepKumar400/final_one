@@ -54,6 +54,44 @@ export const CONTRACT_ABI = [
   },
   {
     "inputs": [
+      { "internalType": "address", "name": "_addr", "type": "address" }
+    ],
+    "name": "registerPresident",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "_addr", "type": "address" }
+    ],
+    "name": "registerWardMember",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "_addr", "type": "address" }
+    ],
+    "name": "deactivateWardMember",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "_amount", "type": "uint256" },
+      { "internalType": "string", "name": "_source", "type": "string" },
+      { "internalType": "string", "name": "_ref", "type": "string" }
+    ],
+    "name": "recordGenesisFund",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "string", "name": "_transactionId", "type": "string" },
       { "internalType": "uint256", "name": "_amount", "type": "uint256" },
       { "internalType": "string", "name": "_purpose", "type": "string" },
@@ -66,47 +104,22 @@ export const CONTRACT_ABI = [
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" }
+      { "internalType": "uint256", "name": "_requestId", "type": "uint256" },
+      { "internalType": "bool", "name": "_approve", "type": "bool" }
     ],
-    "name": "fundRequests",
-    "outputs": [
-      { "internalType": "uint256", "name": "id", "type": "uint256" },
-      { "internalType": "string", "name": "transactionId", "type": "string" },
-      { "internalType": "address", "name": "requester", "type": "address" },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" },
-      { "internalType": "string", "name": "purpose", "type": "string" },
-      { "internalType": "string", "name": "workOrderIpfsHash", "type": "string" },
-      { "internalType": "uint256", "name": "approveCount", "type": "uint256" },
-      { "internalType": "uint256", "name": "rejectCount", "type": "uint256" },
-      { "internalType": "enum GramaNiti.Status", "name": "status", "type": "uint8" },
-      { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
-      { "internalType": "uint256", "name": "totalMembers", "type": "uint256" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "genesisCount",
-    "outputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
-    "stateMutability": "view",
+    "name": "vote",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" }
+      { "internalType": "uint256", "name": "_requestId", "type": "uint256" },
+      { "internalType": "string", "name": "_ipfsHash", "type": "string" }
     ],
-    "name": "genesisFunds",
-    "outputs": [
-      { "internalType": "uint256", "name": "id", "type": "uint256" },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" },
-      { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
-      { "internalType": "string", "name": "source", "type": "string" },
-      { "internalType": "string", "name": "ref", "type": "string" }
-    ],
-    "stateMutability": "view",
+    "name": "updateWorkOrder",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -168,14 +181,12 @@ export const CONTRACT_ABI = [
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "_amount", "type": "uint256" },
-      { "internalType": "string", "name": "_source", "type": "string" },
-      { "internalType": "string", "name": "_ref", "type": "string" }
+    "inputs": [],
+    "name": "genesisCount",
+    "outputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" }
     ],
-    "name": "recordGenesisFund",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -188,25 +199,34 @@ export const CONTRACT_ABI = [
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "_requestId", "type": "uint256" },
-      { "internalType": "string", "name": "_ipfsHash", "type": "string" }
+    "inputs": [],
+    "name": "admin",
+    "outputs": [
+      { "internalType": "address", "name": "", "type": "address" }
     ],
-    "name": "updateWorkOrder",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "_requestId", "type": "uint256" },
-      { "internalType": "bool", "name": "_approve", "type": "bool" }
+      { "internalType": "address", "name": "", "type": "address" }
     ],
-    "name": "vote",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "isPresident",
+    "outputs": [
+      { "internalType": "bool", "name": "", "type": "bool" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "", "type": "address" }
+    ],
+    "name": "isWardMember",
+    "outputs": [
+      { "internalType": "bool", "name": "", "type": "bool" }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ];
-
-

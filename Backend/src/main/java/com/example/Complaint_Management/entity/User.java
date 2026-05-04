@@ -1,6 +1,7 @@
 package com.example.Complaint_Management.entity;
 
 import com.example.Complaint_Management.enums.Role;
+import com.example.Complaint_Management.enums.WalletStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -51,16 +52,17 @@ public class User {
     @Column(name = "ward_name")
     private String wardName;
 
-    // --- Module 1: Blockchain Wallet & Identity ---
-    @Column(name = "wallet_id", unique = true)
-    private String walletId;
+    // --- Module 1: Blockchain Identity ---
+    @Column(name = "wallet_address", unique = true)
+    private String walletAddress;
 
-    @Column(name = "public_key", length = 1024)
-    private String publicKey; // Encoded public key for signature verification
-
-    @Column(name = "wallet_active")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "wallet_status")
     @Builder.Default
-    private Boolean walletActive = false;
+    private WalletStatus walletStatus = WalletStatus.PENDING;
+
+    @Column(name = "wallet_setup_token", unique = true)
+    private String walletSetupToken;
 
     @Column(nullable = false)
     @Builder.Default

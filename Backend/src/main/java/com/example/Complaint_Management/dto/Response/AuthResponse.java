@@ -1,6 +1,7 @@
 package com.example.Complaint_Management.dto.Response;
 
 import com.example.Complaint_Management.enums.Role;
+import com.example.Complaint_Management.enums.WalletStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,12 +23,12 @@ public class AuthResponse {
     private String username;
     private String fullName;
     private Role role;
-    private String wardId;    // null for ADMIN
-    private String wardName;  // null for ADMIN
+    private String wardId; // null for ADMIN
+    private String wardName; // null for ADMIN
 
-    // --- Module 1: Blockchain Wallet Info (Returned once during registration) ---
-    private String walletId;
-    private String privateKey;
-    private String publicKey;
+    // --- Module 1: Blockchain Identity ---
+    private WalletStatus walletStatus;
+    private String walletAddress;
+    private String walletSetupToken;
     private Long pendingComplaintsCount;
 }

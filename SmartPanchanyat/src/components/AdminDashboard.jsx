@@ -8,7 +8,10 @@ import {
   registerUser,
   mapComplaint,
   getUser,
+  getStaffList,
 } from "../utils/api";
+import { ethers } from "ethers";
+import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../utils/web3Config";
 import {
   LayoutDashboard,
   PieChart,
@@ -126,8 +129,12 @@ export default function AdminDashboard({ navigate }) {
     loading: false,
     error: null,
     success: null,
-    walletInfo: null, // Module 1: Store generated wallet credentials
+    walletInfo: null,
   });
+
+  const [staffList, setStaffList] = useState([]);
+  const [staffLoading, setStaffLoading] = useState(false);
+  const [blockchainRegLoading, setBlockchainRegLoading] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -166,7 +173,20 @@ export default function AdminDashboard({ navigate }) {
   }, [filterStatus, filterPriority]);
   useEffect(() => {
     if (activeTab === "analytics") loadAnalytics();
+    if (activeTab === "register") loadStaff();
   }, [activeTab]);
+
+  const loadStaff = async () => {
+    setStaffLoading(true);
+    try {
+      const data = await getStaffList();
+      setStaffList(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setStaffLoading(false);
+    }
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -177,25 +197,15 @@ export default function AdminDashboard({ navigate }) {
       walletInfo: null,
     });
     try {
-      const { ethers } = await import("ethers");
-      const wallet = ethers.Wallet.createRandom();
-
-      const payload = {
-        ...regForm,
-        walletId: wallet.address,
-        publicKey: wallet.address,
-      };
-
-      await registerUser(payload);
+      const data = await registerUser(regForm);
 
       setRegStatus({
         loading: false,
         error: null,
         success:
-          "Staff registered successfully! Blockchain wallet provisioned.",
+          "Staff created! Copy the setup link below to send to the user.",
         walletInfo: {
-          address: wallet.address,
-          privateKey: wallet.privateKey,
+          setupToken: data.walletSetupToken,
         },
       });
       setRegForm({
@@ -207,6 +217,7 @@ export default function AdminDashboard({ navigate }) {
         wardId: "",
         wardName: "",
       });
+      loadStaff();
     } catch (err) {
       setRegStatus({
         loading: false,
@@ -214,6 +225,40 @@ export default function AdminDashboard({ navigate }) {
         success: null,
         walletInfo: null,
       });
+    }
+  };
+
+  const registerOnChain = async (staff) => {
+    if (!staff.walletAddress) {
+      alert("Staff hasn't set up their wallet yet.");
+      return;
+    }
+    setBlockchainRegLoading(staff.userId);
+    try {
+      if (!window.ethereum) throw new Error("MetaMask not found");
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(
+        CONTRACT_ADDRESS,
+        CONTRACT_ABI,
+        signer,
+      );
+
+      let tx;
+      if (staff.role === "PRESIDENT") {
+        tx = await contract.registerPresident(staff.walletAddress);
+      } else {
+        tx = await contract.registerWardMember(staff.walletAddress);
+      }
+
+      await tx.wait();
+      alert(`Success! ${staff.fullName} is now registered on blockchain.`);
+      loadStaff();
+    } catch (err) {
+      console.error(err);
+      alert("Blockchain Registration Failed: " + (err.reason || err.message));
+    } finally {
+      setBlockchainRegLoading(null);
     }
   };
 
@@ -1260,6 +1305,198 @@ export default function AdminDashboard({ navigate }) {
                 : "Create Staff Account"}
             </button>
           </form>
+
+          {/* Staff List Table */}
+          <div style={{ marginTop: "60px" }}>
+            <h3
+              style={{
+                fontSize: "18px",
+                fontWeight: 800,
+                marginBottom: "20px",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              <LayoutList size={20} color="#1d4ed8" /> Active Staff & Blockchain
+              Status
+            </h3>
+
+            {staffLoading ? (
+              <div style={{ textAlign: "center", padding: "40px" }}>
+                <RefreshCw className="spin" size={24} />
+              </div>
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    minWidth: "600px",
+                  }}
+                >
+                  <thead>
+                    <tr style={{ borderBottom: "2px solid #f1f5f9" }}>
+                      <th
+                        style={{
+                          textAlign: "left",
+                          padding: "12px",
+                          fontSize: "12px",
+                          color: "#64748b",
+                        }}
+                      >
+                        NAME / ROLE
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "left",
+                          padding: "12px",
+                          fontSize: "12px",
+                          color: "#64748b",
+                        }}
+                      >
+                        WALLET ADDRESS
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "left",
+                          padding: "12px",
+                          fontSize: "12px",
+                          color: "#64748b",
+                        }}
+                      >
+                        STATUS
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "right",
+                          padding: "12px",
+                          fontSize: "12px",
+                          color: "#64748b",
+                        }}
+                      >
+                        ACTIONS
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {staffList.map((s) => (
+                      <tr
+                        key={s.userId}
+                        style={{ borderBottom: "1px solid #f1f5f9" }}
+                      >
+                        <td style={{ padding: "16px 12px" }}>
+                          <div style={{ fontWeight: 700, fontSize: "14px" }}>
+                            {s.fullName}
+                          </div>
+                          <div style={{ fontSize: "11px", color: "#64748b" }}>
+                            {s.role} {s.wardId ? `• ${s.wardId}` : ""}
+                          </div>
+                        </td>
+                        <td
+                          style={{
+                            padding: "16px 12px",
+                            fontFamily: "monospace",
+                            fontSize: "12px",
+                          }}
+                        >
+                          {s.walletAddress ? (
+                            <span style={{ color: "#0f172a" }}>
+                              {s.walletAddress.slice(0, 8)}...
+                              {s.walletAddress.slice(-4)}
+                            </span>
+                          ) : (
+                            <span
+                              style={{ color: "#94a3b8", fontStyle: "italic" }}
+                            >
+                              Not generated
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: "16px 12px" }}>
+                          {s.walletStatus === "PENDING" ? (
+                            <span
+                              style={{
+                                padding: "4px 8px",
+                                background: "#fef3c7",
+                                color: "#92400e",
+                                borderRadius: "6px",
+                                fontSize: "11px",
+                                fontWeight: 700,
+                              }}
+                            >
+                              IDENTITY PENDING
+                            </span>
+                          ) : (
+                            <span
+                              style={{
+                                padding: "4px 8px",
+                                background: "#dcfce7",
+                                color: "#166534",
+                                borderRadius: "6px",
+                                fontSize: "11px",
+                                fontWeight: 700,
+                              }}
+                            >
+                              IDENTITY READY
+                            </span>
+                          )}
+                        </td>
+                        <td
+                          style={{ padding: "16px 12px", textAlign: "right" }}
+                        >
+                          {s.walletStatus === "PENDING" ? (
+                            <button
+                              onClick={() => {
+                                const link = `${window.location.origin}/setup-wallet?token=${s.walletSetupToken}`;
+                                navigator.clipboard.writeText(link);
+                                alert(
+                                  "Setup link copied! Send this to " +
+                                    s.fullName,
+                                );
+                              }}
+                              style={{
+                                padding: "6px 12px",
+                                background: "#f8fafc",
+                                border: "1px solid #e2e8f0",
+                                borderRadius: "8px",
+                                fontSize: "12px",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                              }}
+                            >
+                              Copy Setup Link
+                            </button>
+                          ) : (
+                            <button
+                              disabled={blockchainRegLoading === s.userId}
+                              onClick={() => registerOnChain(s)}
+                              style={{
+                                padding: "6px 12px",
+                                background: "#000b60",
+                                color: "#fff",
+                                border: "none",
+                                borderRadius: "8px",
+                                fontSize: "12px",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                opacity:
+                                  blockchainRegLoading === s.userId ? 0.6 : 1,
+                              }}
+                            >
+                              {blockchainRegLoading === s.userId
+                                ? "Registering..."
+                                : "Activate On Blockchain"}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

@@ -2,9 +2,15 @@
 pragma solidity ^0.8.19;
 
 contract GramaNiti {
-    
+
+    // ── Roles ──
+    address public admin;
+    mapping(address => bool) public isPresident;
+    mapping(address => bool) public isWardMember;
+
+    // ── Data structures ──
     enum Status { PENDING, APPROVED, REJECTED, COMPLETED }
-    
+
     struct GenesisFund {
         uint256 id;
         uint256 amount;
@@ -15,35 +21,79 @@ contract GramaNiti {
 
     struct FundRequest {
         uint256 id;
-        string transactionId; // Unique ID from Backend
-        address requester; // President
+        string transactionId;
+        address requester;
         uint256 amount;
         string purpose;
-        string workOrderIpfsHash; // Optional initially, updated on completion
+        string workOrderIpfsHash;
         uint256 approveCount;
         uint256 rejectCount;
         Status status;
         uint256 timestamp;
         uint256 totalMembers;
     }
-    
+
     mapping(uint256 => FundRequest) public fundRequests;
     uint256 public requestCount;
-    
+
     mapping(uint256 => GenesisFund) public genesisFunds;
     uint256 public genesisCount;
 
-    // mapping request ID -> member address -> hasVoted
     mapping(uint256 => mapping(address => bool)) public hasVoted;
-    
+
+    // ── Events ──
+    event WardMemberRegistered(address member);
+    event PresidentRegistered(address president);
     event FundRecorded(uint256 id, uint256 amount, string source, string ref);
     event RequestCreated(uint256 id, string transactionId, address requester, uint256 amount, string purpose);
     event Voted(uint256 id, address voter, bool approve);
     event RequestStatusChanged(uint256 id, Status newStatus);
     event WorkOrderUpdated(uint256 id, string ipfsHash);
-    
-    // Step 1: Admin records the total amount received from Government
-    function recordGenesisFund(uint256 _amount, string memory _source, string memory _ref) public {
+
+    // ── Modifiers ──
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "Only admin can do this");
+        _;
+    }
+
+    modifier onlyPresident() {
+        require(isPresident[msg.sender], "Only president can create requests");
+        _;
+    }
+
+    modifier onlyWardMember() {
+        require(isWardMember[msg.sender], "Only registered ward members can vote");
+        _;
+    }
+
+    // ── Constructor ──
+    constructor() {
+        admin = msg.sender; // Account #0 becomes admin on deploy
+    }
+
+    // ── Role Registration ──
+    function registerWardMember(address _addr) public onlyAdmin {
+        require(_addr != address(0), "Invalid address");
+        isWardMember[_addr] = true;
+        emit WardMemberRegistered(_addr);
+    }
+
+    function registerPresident(address _addr) public onlyAdmin {
+        require(_addr != address(0), "Invalid address");
+        isPresident[_addr] = true;
+        emit PresidentRegistered(_addr);
+    }
+
+    function deactivateWardMember(address _addr) public onlyAdmin {
+        isWardMember[_addr] = false;
+    }
+
+    // ── Genesis Fund ──
+    function recordGenesisFund(
+        uint256 _amount,
+        string memory _source,
+        string memory _ref
+    ) public onlyAdmin {
         genesisCount++;
         genesisFunds[genesisCount] = GenesisFund({
             id: genesisCount,
@@ -55,11 +105,16 @@ contract GramaNiti {
         emit FundRecorded(genesisCount, _amount, _source, _ref);
     }
 
-    // Step 2: President creates a Fund Request
-    function createRequest(string memory _transactionId, uint256 _amount, string memory _purpose, uint256 _totalMembers) public {
+    // ── Fund Request (President only) ──
+    function createRequest(
+        string memory _transactionId,
+        uint256 _amount,
+        string memory _purpose,
+        uint256 _totalMembers
+    ) public onlyPresident {
         require(_amount > 0, "Amount must be greater than 0");
         require(_totalMembers > 0, "Total members must be greater than 0");
-        
+
         requestCount++;
         fundRequests[requestCount] = FundRequest({
             id: requestCount,
@@ -74,31 +129,31 @@ contract GramaNiti {
             timestamp: block.timestamp,
             totalMembers: _totalMembers
         });
-        
+
         emit RequestCreated(requestCount, _transactionId, msg.sender, _amount, _purpose);
     }
-    
-    // Step 3 & 4: Ward Members vote and Proof of Validation Consensus
-    function vote(uint256 _requestId, bool _approve) public {
+
+    // ── Vote (Ward Members only) ──
+    function vote(uint256 _requestId, bool _approve) public onlyWardMember {
         require(_requestId > 0 && _requestId <= requestCount, "Invalid request ID");
+
         FundRequest storage req = fundRequests[_requestId];
-        require(req.status == Status.PENDING, "Request not pending");
+        require(req.status == Status.PENDING, "Request is not pending");
         require(!hasVoted[_requestId][msg.sender], "Already voted");
-        
+
         hasVoted[_requestId][msg.sender] = true;
-        
+
         if (_approve) {
             req.approveCount++;
         } else {
             req.rejectCount++;
         }
-        
+
         emit Voted(_requestId, msg.sender, _approve);
-        
-        // Step 4: Consensus logic (e.g. 51% of members)
-        // If 6 members, threshold is 4. If 10 members, threshold is 6.
+
+        // Consensus: 51% threshold
         uint256 threshold = (req.totalMembers / 2) + 1;
-        
+
         if (req.approveCount >= threshold) {
             req.status = Status.APPROVED;
             emit RequestStatusChanged(_requestId, Status.APPROVED);
@@ -107,26 +162,27 @@ contract GramaNiti {
             emit RequestStatusChanged(_requestId, Status.REJECTED);
         }
     }
-    
-    // Step 5: Update with Proof (IPFS) and mark as COMPLETED
-    function updateWorkOrder(uint256 _requestId, string memory _ipfsHash) public {
+
+    // ── Complete Work Order ──
+    function updateWorkOrder(
+        uint256 _requestId,
+        string memory _ipfsHash
+    ) public {
         require(_requestId > 0 && _requestId <= requestCount, "Invalid request ID");
         FundRequest storage req = fundRequests[_requestId];
-        require(req.status == Status.APPROVED, "Request must be approved");
+        require(req.status == Status.APPROVED, "Request must be approved first");
         require(msg.sender == req.requester, "Only requester can update");
-        
+
         req.workOrderIpfsHash = _ipfsHash;
         req.status = Status.COMPLETED;
-        
+
         emit WorkOrderUpdated(_requestId, _ipfsHash);
         emit RequestStatusChanged(_requestId, Status.COMPLETED);
     }
-    
+
+    // ── View Functions ──
     function getAllRequests() public view returns (FundRequest[] memory) {
-        if (requestCount == 0) {
-            return new FundRequest[](0);
-        }
-        
+        if (requestCount == 0) return new FundRequest[](0);
         FundRequest[] memory requests = new FundRequest[](requestCount);
         for (uint256 i = 1; i <= requestCount; i++) {
             requests[i - 1] = fundRequests[i];
@@ -141,6 +197,11 @@ contract GramaNiti {
         }
         return funds;
     }
+
+    function checkRole(address _addr) public view returns (string memory) {
+        if (_addr == admin) return "ADMIN";
+        if (isPresident[_addr]) return "PRESIDENT";
+        if (isWardMember[_addr]) return "WARD_MEMBER";
+        return "NONE";
+    }
 }
-
-
