@@ -199,6 +199,7 @@ export default function ConnectWalletButton({ currentUser, authToken }) {
               background: "white",
               borderRadius: 20,
               padding: 36,
+              marginTop: 500,
               width: 440,
               boxShadow: "0 30px 80px rgba(0,0,0,0.25)",
             }}

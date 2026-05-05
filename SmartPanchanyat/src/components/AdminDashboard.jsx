@@ -37,6 +37,7 @@ import {
   FileText,
   FileDigit,
 } from "lucide-react";
+import GenesisLedger from "./blockchain/GenesisLedger";
 
 const STATUS_COLOR = {
   NEW: {
@@ -436,6 +437,11 @@ export default function AdminDashboard({ navigate }) {
             key: "register",
             label: "Manage Staff",
             icon: <UserPlus size={16} />,
+          },
+          {
+            key: "blockchain",
+            label: "Blockchain",
+            icon: <ShieldCheck size={16} />,
           },
         ].map((tab) => (
           <button
@@ -1499,6 +1505,12 @@ export default function AdminDashboard({ navigate }) {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {activeTab === "blockchain" && (
+        <div style={{ padding: "20px 0" }}>
+          <GenesisLedger />
         </div>
       )}
 

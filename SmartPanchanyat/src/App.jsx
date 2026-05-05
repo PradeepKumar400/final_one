@@ -9,8 +9,8 @@ import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
 import AdminDashboard from "./components/AdminDashboard";
 import WardDashboard from "./components/WardDashboard";
+import PresidentDashboard from "./components/PresidentDashboard";
 import ProfilePage from "./components/ProfilePage";
-import FundsPage from "./components/blockchain/FundsPage";
 import WalletSetupPage from "./components/blockchain/WalletSetupPage";
 import PublicFeed from "./components/PublicFeed";
 import { getUser, logout } from "./utils/api";
@@ -80,9 +80,13 @@ function App() {
         ) : (
           <LoginPage navigate={navigate} onLogin={handleLogin} />
         );
+      case "president":
+        return authUser?.role === "PRESIDENT" ? (
+          <PresidentDashboard navigate={navigate} />
+        ) : (
+          <LoginPage navigate={navigate} onLogin={handleLogin} />
+        );
 
-      case "funds":
-        return <FundsPage navigate={navigate} />;
       case "setup-wallet":
         return <WalletSetupPage />;
       case "public-ledger":
@@ -162,7 +166,6 @@ function App() {
         onLogout={handleLogout}
       />
       <main className="main-content">{renderPage()}</main>
-     
     </div>
   );
 }

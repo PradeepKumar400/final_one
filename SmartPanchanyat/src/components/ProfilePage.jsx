@@ -1,6 +1,105 @@
 import React, { useEffect, useState } from 'react';
 import { User, Shield, Landmark, MapPin, Phone, Mail, Award, Clock, Users, ShieldCheck } from 'lucide-react';
-import { getStaffList } from '../utils/api';
+import { getStaffList, getToken } from '../utils/api';
+import ConnectWalletButton from './ConnectWalletButton';
+
+// Reads live MetaMask account and compares with registered wallet
+function MetaMaskStatus({ registeredWallet }) {
+    const [liveAccount, setLiveAccount] = useState(null);
+    const [checking, setChecking] = useState(true);
+
+    useEffect(() => {
+        const check = async () => {
+            if (!window.ethereum) { setChecking(false); return; }
+            try {
+                const accounts = await window.ethereum.request({ 
+                    method: "eth_accounts" 
+                });
+                setLiveAccount(accounts[0] || null);
+            } catch {
+                setLiveAccount(null);
+            }
+            setChecking(false);
+        };
+        check();
+
+        // Update when user switches MetaMask account
+        const handleAccountsChanged = (accounts) => {
+            setLiveAccount(accounts[0] || null);
+        };
+        window.ethereum?.on("accountsChanged", handleAccountsChanged);
+        
+        return () => {
+             window.ethereum?.removeListener("accountsChanged", handleAccountsChanged);
+        };
+    }, []);
+
+    if (checking) return null;
+
+    const isMatch = liveAccount && registeredWallet &&
+        liveAccount.toLowerCase() === registeredWallet.toLowerCase();
+
+    const isConnectedButWrong = liveAccount && registeredWallet && !isMatch;
+    const notConnected = !liveAccount;
+    const noWalletRegistered = !registeredWallet;
+
+    return (
+        <div style={{ 
+            padding: "14px 16px", borderRadius: "12px",
+            border: `1px solid ${isMatch ? "#4ade8044" : "#f8717144"}`,
+            background: isMatch ? "rgba(74,222,128,0.1)" : "rgba(248,113,113,0.1)",
+            display: "flex", alignItems: "center", gap: "10px"
+        }}>
+            <div style={{ 
+                width: "10px", height: "10px", borderRadius: "50%",
+                background: isMatch ? "#4ade80" : "#f87171",
+                flexShrink: 0
+            }} />
+            <div style={{ flex: 1 }}>
+                {isMatch && (
+                    <>
+                        <div style={{ fontSize: "13px", fontWeight: 800, color: "#4ade80" }}>
+                            ✅ MetaMask Connected
+                        </div>
+                        <div style={{ fontSize: "11px", color: "#a5b4fc", marginTop: "2px", fontFamily: "monospace", wordBreak: "break-all" }}>
+                            Active Wallet: {liveAccount}
+                        </div>
+                    </>
+                )}
+                {isConnectedButWrong && (
+                    <>
+                        <div style={{ fontSize: "13px", fontWeight: 800, color: "#f87171" }}>
+                            ⚠️ Wrong MetaMask Account
+                        </div>
+                        <div style={{ fontSize: "11px", color: "#fca5a5", marginTop: "2px" }}>
+                            Switch to your registered wallet in MetaMask
+                        </div>
+                    </>
+                )}
+                {notConnected && !noWalletRegistered && (
+                    <>
+                        <div style={{ fontSize: "13px", fontWeight: 800, color: "#f87171" }}>
+                            MetaMask Not Connected
+                        </div>
+                        <div style={{ fontSize: "11px", color: "#fca5a5", marginTop: "2px" }}>
+                            Open MetaMask and connect your account
+                        </div>
+                    </>
+                )}
+                {noWalletRegistered && (
+                    <>
+                        <div style={{ fontSize: "13px", fontWeight: 800, color: "#94a3b8" }}>
+                            No Wallet Registered
+                        </div>
+                        <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px" }}>
+                            Click "Connect Wallet" below to link your identity
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}
 
 export default function ProfilePage({ user }) {
     const [staff, setStaff] = useState([]);
@@ -130,20 +229,62 @@ export default function ProfilePage({ user }) {
                             </p>
 
                             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+                                {/* MetaMask Live Status — same as fund page */}
+                                <MetaMaskStatus registeredWallet={user.walletAddress} />
+
+                                {/* Wallet Address from backend */}
                                 <div style={{ background: "rgba(255,255,255,0.05)", padding: "16px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }}>
-                                    <label style={{ ...labelStyle, color: "#818cf8" }}>Wallet ID (Public Address)</label>
-                                    <div style={{ ...valueStyle, color: "#fff", fontFamily: "monospace", marginTop: "4px", fontSize: "14px" }}>
-                                        {user.walletId || "WALLET_NOT_INITIALIZED"}
+                                    <label style={{ ...labelStyle, color: "#818cf8" }}>
+                                        Wallet ID (Public Address)
+                                    </label>
+                                    <div style={{ 
+                                        color: "#fff", fontFamily: "monospace", 
+                                        marginTop: "4px", fontSize: "13px",
+                                        wordBreak: "break-all"
+                                    }}>
+                                        {user.walletAddress 
+                                            ? user.walletAddress 
+                                            : "Not connected — click button below to connect"}
                                     </div>
                                 </div>
 
+                                {/* Blockchain Status */}
                                 <div style={{ background: "rgba(255,255,255,0.05)", padding: "16px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }}>
                                     <label style={{ ...labelStyle, color: "#818cf8" }}>Identity Status</label>
                                     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
-                                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: user.walletId ? "#4ade80" : "#94a3b8" }}></div>
-                                        <span style={{ fontWeight: 600 }}>{user.walletId ? "Verified on Blockchain" : "Pending Provisioning"}</span>
+                                        <div style={{ 
+                                            width: "8px", height: "8px", borderRadius: "50%", 
+                                            background: user.walletStatus === "ACTIVE" ? "#4ade80" : "#94a3b8" 
+                                        }}></div>
+                                        <span style={{ fontWeight: 600, color: "#fff" }}>
+                                            {user.walletStatus === "ACTIVE" 
+                                                ? "Verified on Blockchain" 
+                                                : "Pending — Wallet not connected"}
+                                        </span>
                                     </div>
                                 </div>
+
+                                {/* Role on blockchain */}
+                                <div style={{ background: "rgba(255,255,255,0.05)", padding: "16px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                                    <label style={{ ...labelStyle, color: "#818cf8" }}>Blockchain Role</label>
+                                    <div style={{ 
+                                        marginTop: "6px",
+                                        display: "inline-flex", alignItems: "center", gap: "8px",
+                                        background: user.role === "PRESIDENT" ? "#7c3aed" : "#1d4ed8",
+                                        padding: "6px 14px", borderRadius: "100px",
+                                        fontSize: "12px", fontWeight: 800, color: "#fff"
+                                    }}>
+                                        {user.role === "PRESIDENT" ? "👑 PRESIDENT" : "🗳️ WARD MEMBER"}
+                                    </div>
+                                </div>
+
+                                {/* MetaMask Connection Button */}
+                                {(user.role === "PRESIDENT" || user.role === "WARD_MEMBER") && (
+                                    <div style={{ marginTop: "8px" }}>
+                                        <ConnectWalletButton currentUser={user} authToken={getToken()} />
+                                    </div>
+                                )}
                             </div>
                         </div>
 
