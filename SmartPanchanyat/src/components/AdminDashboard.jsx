@@ -38,6 +38,7 @@ import {
   FileDigit,
 } from "lucide-react";
 import GenesisLedger from "./blockchain/GenesisLedger";
+import AdminFundRequests from "./blockchain/AdminFundRequests";
 
 const STATUS_COLOR = {
   NEW: {
@@ -424,11 +425,6 @@ export default function AdminDashboard({ navigate }) {
       >
         {[
           {
-            key: "complaints",
-            label: "Complaints",
-            icon: <LayoutList size={16} />,
-          },
-          {
             key: "analytics",
             label: "Analytics",
             icon: <BarChart3 size={16} />,
@@ -440,8 +436,13 @@ export default function AdminDashboard({ navigate }) {
           },
           {
             key: "blockchain",
-            label: "Blockchain",
+            label: "Genesis Ledger",
             icon: <ShieldCheck size={16} />,
+          },
+          {
+            key: "fund_proposals",
+            label: "Fund Proposals",
+            icon: <FileDigit size={16} />,
           },
         ].map((tab) => (
           <button
@@ -471,362 +472,7 @@ export default function AdminDashboard({ navigate }) {
       </div>
 
       {/* COMPLAINTS TAB */}
-      {activeTab === "complaints" && (
-        <>
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              marginBottom: "20px",
-              flexWrap: "wrap",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ position: "relative" }}>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                style={{
-                  padding: "10px 16px",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "10px",
-                  fontSize: "13px",
-                  fontFamily: "inherit",
-                  background: "#fff",
-                  outline: "none",
-                  cursor: "pointer",
-                }}
-              >
-                <option value="">All Statuses</option>
-                {Object.entries(STATUS_COLOR)
-                  .filter(([v, c]) => v !== "NEW" && v !== "PENDING_REVIEW")
-                  .map(([v, c]) => (
-                    <option key={v} value={v}>
-                      {c.label}
-                    </option>
-                  ))}
-              </select>
-            </div>
-            <select
-              value={filterPriority}
-              onChange={(e) => setFilterPriority(e.target.value)}
-              style={{
-                padding: "10px 16px",
-                border: "1px solid #e5e7eb",
-                borderRadius: "10px",
-                fontSize: "13px",
-                fontFamily: "inherit",
-                background: "#fff",
-                outline: "none",
-                cursor: "pointer",
-              }}
-            >
-              <option value="">All Priorities</option>
-              <option value="URGENT">🔴 Urgent</option>
-              <option value="NORMAL">🔵 Normal</option>
-              <option value="LOW">⚪ Low</option>
-            </select>
-            <button
-              onClick={load}
-              style={{
-                padding: "10px 16px",
-                background: "#eff6ff",
-                border: "1px solid #bfdbfe",
-                borderRadius: "10px",
-                cursor: "pointer",
-                fontSize: "13px",
-                fontFamily: "inherit",
-                color: "#1d4ed8",
-                fontWeight: 700,
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <RefreshCw size={14} /> Refresh
-            </button>
-            <span
-              style={{
-                marginLeft: "auto",
-                fontSize: "13px",
-                color: "#6b7280",
-                alignSelf: "center",
-                fontWeight: 600,
-              }}
-            >
-              {complaints.length} Records Found
-            </span>
-          </div>
-
-          {loading ? (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "100px 0",
-                color: "#9ca3af",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  marginBottom: "20px",
-                }}
-              >
-                <RefreshCw
-                  size={48}
-                  className="spin"
-                  style={{ animation: "spin 2s linear infinite" }}
-                />
-              </div>
-              <p style={{ fontWeight: 600 }}>Syncing Ledger...</p>
-            </div>
-          ) : complaints.length === 0 ? (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "100px 0",
-                color: "#9ca3af",
-                background: "#fff",
-                borderRadius: "20px",
-                border: "1px dashed #e5e7eb",
-              }}
-            >
-              <FileText size={64} style={{ marginBottom: "20px" }} />
-              <h3 style={{ fontSize: "18px", color: "#374151" }}>
-                No complaints found
-              </h3>
-              <p>Try adjusting your search criteria</p>
-            </div>
-          ) : (
-            complaints.map((c) => {
-              const st = STATUS_COLOR[c.status] || STATUS_COLOR.NEW;
-              const pri = PRIORITY_COLOR[c.priority] || PRIORITY_COLOR.NORMAL;
-              return (
-                <div
-                  key={c.id}
-                  style={cardStyle}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow =
-                      "0 8px 24px rgba(0,0,0,0.08)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow =
-                      "0 1px 4px rgba(0,0,0,0.07)";
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      flexWrap: "wrap",
-                      gap: "8px",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    <div>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "10px",
-                          flexWrap: "wrap",
-                          marginBottom: "6px",
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "14px",
-                            fontWeight: 800,
-                            color: "#1d4ed8",
-                          }}
-                        >
-                          #{c.complaintNumber}
-                        </span>
-                        <span
-                          style={{
-                            padding: "4px 10px",
-                            borderRadius: "20px",
-                            fontSize: "11px",
-                            fontWeight: 700,
-                            ...st,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
-                          {st.icon} {st.label}
-                        </span>
-                        <span
-                          style={{
-                            padding: "4px 10px",
-                            borderRadius: "20px",
-                            fontSize: "11px",
-                            fontWeight: 700,
-                            ...pri,
-                          }}
-                        >
-                          {c.priority}
-                        </span>
-                        {c.isSlaBreached && (
-                          <span
-                            style={{
-                              padding: "4px 10px",
-                              borderRadius: "20px",
-                              fontSize: "11px",
-                              fontWeight: 800,
-                              background: "#fee2e2",
-                              color: "#dc2626",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
-                            }}
-                          >
-                            <AlertCircle size={12} /> SLA
-                          </span>
-                        )}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          color: "#6b7280",
-                          display: "flex",
-                          gap: "12px",
-                          alignItems: "center",
-                        }}
-                      >
-                        <span>{c.type}</span>
-                        <span
-                          style={{
-                            width: 3,
-                            height: 3,
-                            background: "#d1d5db",
-                            borderRadius: "50%",
-                          }}
-                        />
-                        <span>{c.wardName}</span>
-                        <span
-                          style={{
-                            width: 3,
-                            height: 3,
-                            background: "#d1d5db",
-                            borderRadius: "50%",
-                          }}
-                        />
-                        <span>{c.citizenName}</span>
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color: "#9ca3af",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
-                      <Clock size={12} />{" "}
-                      {new Date(c.createdAt).toLocaleString("en-IN")}
-                    </div>
-                  </div>
-
-                  <p
-                    style={{
-                      margin: "0 0 16px",
-                      fontSize: "14px",
-                      color: "#374151",
-                      lineHeight: "1.5",
-                    }}
-                  >
-                    {c.description.slice(0, 150)}
-                    {c.description.length > 150 ? "..." : ""}
-                  </p>
-
-                  {c.rejectionReason && (
-                    <div
-                      style={{
-                        background: "#fee2e2",
-                        borderRadius: "10px",
-                        padding: "10px 14px",
-                        marginBottom: "16px",
-                        fontSize: "13px",
-                        color: "#991b1b",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                    >
-                      <XCircle size={16} /> <strong>Rejected:</strong>{" "}
-                      {c.rejectionReason}
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "10px",
-                      flexWrap: "wrap",
-                      borderTop: "1px solid #f3f4f6",
-                      paddingTop: "16px",
-                    }}
-                  >
-                    {(c.status === "NEW" || c.status === "PENDING_REVIEW") && (
-                      <ActionBtn
-                        color="#1d4ed8"
-                        bg="#eff6ff"
-                        onClick={() => setVerifyModal(c)}
-                      >
-                        <CheckCircle size={14} /> Verify / Reject
-                      </ActionBtn>
-                    )}
-                    {c.status === "VERIFIED" && (
-                      <ActionBtn
-                        color="#7c3aed"
-                        bg="#f5f3ff"
-                        onClick={() => setAssignModal(c)}
-                      >
-                        <Wrench size={14} /> Assign Technician
-                      </ActionBtn>
-                    )}
-                    {["ASSIGNED", "IN_PROGRESS"].includes(c.status) && (
-                      <ActionBtn
-                        color="#c2410c"
-                        bg="#fff7ed"
-                        onClick={() => setProgressModal(c)}
-                      >
-                        <RefreshCw size={14} /> Update Progress
-                      </ActionBtn>
-                    )}
-                    {!["REJECTED", "CLOSED", "ESCALATED"].includes(
-                      c.status,
-                    ) && (
-                      <ActionBtn
-                        color="#dc2626"
-                        bg="#fef2f2"
-                        onClick={() => {
-                          const r = prompt("Escalation reason?");
-                          if (r) doEscalate(c.id, r);
-                        }}
-                      >
-                        <AlertCircle size={14} /> Escalate
-                      </ActionBtn>
-                    )}
-                    <ActionBtn
-                      color="#4b5563"
-                      bg="#f3f4f6"
-                      onClick={() => setCommentModal(c)}
-                    >
-                      <MessageSquare size={14} /> Comment
-                    </ActionBtn>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </>
-      )}
+      {/* Complaints moved to President Dashboard */}
 
       {/* ANALYTICS TAB */}
       {activeTab === "analytics" && analytics && (
@@ -1511,6 +1157,12 @@ export default function AdminDashboard({ navigate }) {
       {activeTab === "blockchain" && (
         <div style={{ padding: "20px 0" }}>
           <GenesisLedger />
+        </div>
+      )}
+
+      {activeTab === "fund_proposals" && (
+        <div style={{ padding: "20px 0" }}>
+          <AdminFundRequests />
         </div>
       )}
 

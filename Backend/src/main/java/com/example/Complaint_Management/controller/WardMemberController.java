@@ -26,7 +26,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/complaints/ward")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('WARD_MEMBER', 'ADMIN')")
+@PreAuthorize("hasAnyRole('WARD_MEMBER', 'ADMIN', 'PRESIDENT')")
 public class WardMemberController {
 
     private final ComplaintService complaintService;

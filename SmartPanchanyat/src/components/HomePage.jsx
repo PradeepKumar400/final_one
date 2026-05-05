@@ -1,37 +1,32 @@
-import { HandCoins, CheckCircle, Users, Megaphone, Search, FileText, Droplets, Pickaxe, HardHat, Construction } from "lucide-react";
+import { 
+  Megaphone, 
+  Search, 
+  Database, 
+  TrendingUp, 
+  ShieldCheck, 
+  ArrowRight,
+  Activity,
+  Droplets,
+  Zap,
+  Hammer,
+  Clock,
+  CheckCircle,
+  Pickaxe,
+  Construction
+} from "lucide-react";
 
 export default function HomePage({ navigate }) {
   const stats = [
-    { label: "Total Funds Tracked", value: "₹15,40,000", icon: <HandCoins size={24} color="#f59e0b" /> },
-    { label: "Verified Projects", value: "24", icon: <CheckCircle size={24} color="#10b981" /> },
-    { label: "Issues Resolved", value: "156", icon: <Users size={24} color="#3b82f6" /> },
+    { label: "Total Funds Tracked", value: "₹15,40,000", color: "#4f46e5", bg: "#eef2ff" },
+    { label: "Verified Projects", value: "24", color: "#10b981", bg: "#f0fdf4" },
+    { label: "Issues Resolved", value: "156", color: "#f59e0b", bg: "#fffbeb" },
   ];
 
   const feed = [
-    {
-      icon: <CheckCircle size={18} />,
-      color: "#10b981",
-      text: "Ward 4 Pipeline Approved",
-      time: "10 mins ago",
-    },
-    {
-      icon: <Pickaxe size={18} />,
-      color: "#f97316",
-      text: "Road Repair Completed",
-      time: "1 hour ago",
-    },
-    {
-      icon: <Droplets size={18} />,
-      color: "#2563eb",
-      text: "New Water Tank Installation Started",
-      time: "2 hours ago",
-    },
-    {
-      icon: <Construction size={18} />,
-      color: "#f59e0b",
-      text: "Overhead Tank Installation",
-      time: "2 hours ago",
-    },
+    { icon: <CheckCircle size={16} />, color: "#10b981", text: "Ward 4 Pipeline Approved", time: "10 mins ago" },
+    { icon: <Pickaxe size={16} />, color: "#f97316", text: "Road Repair Completed", time: "1 hour ago" },
+    { icon: <Droplets size={16} />, color: "#2563eb", text: "New Water Tank Installation Started", time: "2 hours ago" },
+    { icon: <Construction size={16} />, color: "#f59e0b", text: "Overhead Tank Installation", time: "2 hours ago" },
   ];
 
   const projects = [
@@ -42,357 +37,138 @@ export default function HomePage({ navigate }) {
   ];
 
   return (
-    <div style={{ padding: "75px 48px" }}>
-      {/* Hero */}
-      <div
-        style={{
-          borderRadius: "20px",
-          background:
-            "linear-gradient(135deg, #1d4ed8 0%, #0891b2 50%, #059669 100%)",
-          padding: "48px 40px",
-          color: "#fff",
-          marginBottom: "32px",
-          textAlign: "center",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            opacity: 0.1,
-            backgroundImage:
-              "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)",
-            backgroundSize: "60px 60px",
-          }}
-        />
-        <h1 style={{ margin: "0 0 8px", fontSize: "32px", fontWeight: 800 }}>
-          Welcome to <strong>SmartPanchayat</strong>
-        </h1>
-        <p style={{ margin: 0, opacity: 0.85, fontSize: "16px" }}>
-          Empowering Citizens through Blockchain-Powered Transparency and Trust
-        </p>
-
-        <div
-          style={{
-            display: "flex",
-            gap: "20px",
-            marginTop: "32px",
-            justifyContent: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          {stats.map((s) => (
-            <div
-              key={s.label}
-              style={{
-                background: "rgba(255,255,255,0.15)",
-                backdropFilter: "blur(10px)",
-                borderRadius: "16px",
-                padding: "20px 28px",
-                minWidth: "180px",
-                border: "1px solid rgba(255,255,255,0.2)",
-              }}
+    <div style={{ padding: "80px 48px 40px", maxWidth: "1200px", margin: "0 auto", fontFamily: "'Inter', sans-serif" }}>
+      
+      {/* ── Hero Section ── */}
+      <div style={{ 
+        background: "linear-gradient(135deg, #1d4ed8 0%, #0891b2 50%, #059669 100%)", 
+        borderRadius: "32px", padding: "64px", color: "white", marginBottom: "40px",
+        position: "relative", overflow: "hidden", boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
+      }}>
+        <div style={{ position: "absolute", right: "-10%", top: "-10%", width: "400px", height: "400px", background: "radial-gradient(circle, #3b82f633 0%, transparent 70%)", pointerEvents: "none" }} />
+        
+        <div style={{ position: "relative", zIndex: 2, maxWidth: "700px" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "#3b82f622", padding: "6px 16px", borderRadius: "100px", border: "1px solid #3b82f644", marginBottom: "20px", fontSize: "12px", fontWeight: 700, color: "#93c5fd" }}>
+            <ShieldCheck size={14} /> SECURED BY BLOCKCHAIN TECHNOLOGY
+          </div>
+          <h1 style={{ fontSize: "48px", fontWeight: 900, margin: "0 0 16px", lineHeight: 1.1, letterSpacing: "-1px" }}>
+            SmartPanchayat <br /><span style={{ color: "#fff", opacity: 0.9 }}>Transparency & Trust</span>
+          </h1>
+          <p style={{ fontSize: "18px", color: "#fff", opacity: 0.8, lineHeight: 1.6, margin: "0 0 32px" }}>
+            Empowering Citizens through Blockchain-Powered Transparency and Trust. Monitor funds and report issues instantly.
+          </p>
+          
+          <div style={{ display: "flex", gap: "16px" }}>
+            <button 
+              onClick={() => navigate("raise")}
+              style={{ padding: "14px 28px", background: "white", color: "#1d4ed8", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: "10px", transition: "all 0.2s" }}
             >
-              <div style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>
-                {s.icon}
-              </div>
-              <div style={{ fontSize: "24px", fontWeight: 800 }}>{s.value}</div>
-              <div style={{ fontSize: "13px", opacity: 0.85 }}>{s.label}</div>
-            </div>
-          ))}
+              <Megaphone size={18} /> Raise Public Issue
+            </button>
+            <button 
+              onClick={() => navigate("track")}
+              style={{ padding: "14px 28px", background: "rgba(255,255,255,0.2)", color: "white", border: "none", borderRadius: "12px", fontSize: "15px", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: "10px" }}
+            >
+              <Search size={18} /> Track Your Complaint
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div
-        style={{
-          display: "flex",
-          gap: "16px",
-          marginBottom: "32px",
-          flexWrap: "wrap",
-        }}
-      >
-        <button
-          onClick={() => navigate("raise")}
-          style={{
-            flex: 1,
-            minWidth: "200px",
-            padding: "20px",
-            borderRadius: "16px",
-            background: "linear-gradient(135deg, #1d4ed8, #7c3aed)",
-            color: "#fff",
-            border: "none",
-            cursor: "pointer",
-            fontSize: "16px",
-            fontWeight: 700,
-            fontFamily: "inherit",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-          }}
-        >
-          <Megaphone size={32} />
-          <div style={{ textAlign: "left" }}>
-            <div>Raise New Issue</div>
-            <div style={{ fontSize: "12px", opacity: 0.8, fontWeight: 400 }}>
-              Report a civic problem
-            </div>
+      {/* ── Stats Row ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px", marginBottom: "48px" }}>
+        {stats.map((s, i) => (
+          <div key={i} style={{ background: "white", padding: "28px", borderRadius: "24px", border: "1px solid #f1f5f9", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
+            <div style={{ fontSize: "13px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{s.label}</div>
+            <div style={{ fontSize: "32px", fontWeight: 900, color: "#0f172a" }}>{s.value}</div>
+            <div style={{ width: "40px", height: "4px", background: s.color, borderRadius: "10px", marginTop: "16px" }} />
           </div>
-        </button>
-        <button
-          onClick={() => navigate("track")}
-          style={{
-            flex: 1,
-            minWidth: "200px",
-            padding: "20px",
-            borderRadius: "16px",
-            background: "#fff",
-            color: "#111827",
-            border: "1px solid #e5e7eb",
-            cursor: "pointer",
-            fontSize: "16px",
-            fontWeight: 700,
-            fontFamily: "inherit",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-          }}
-        >
-          <Search size={32} color="#6b7280" />
-          <div style={{ textAlign: "left" }}>
-            <div>Track Issues</div>
-            <div
-              style={{ fontSize: "12px", color: "#6b7280", fontWeight: 400 }}
-            >
-              Monitor your complaints
-            </div>
-          </div>
-        </button>
-        <button
-          onClick={() => navigate("complaints")}
-          style={{
-            flex: 1,
-            minWidth: "200px",
-            padding: "20px",
-            borderRadius: "16px",
-            background: "#fff",
-            color: "#111827",
-            border: "1px solid #e5e7eb",
-            cursor: "pointer",
-            fontSize: "16px",
-            fontWeight: 700,
-            fontFamily: "inherit",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-          }}
-        >
-          <FileText size={32} color="#6b7280" />
-          <div style={{ textAlign: "left" }}>
-            <div>All Complaints</div>
-            <div
-              style={{ fontSize: "12px", color: "#6b7280", fontWeight: 400 }}
-            >
-              View all ward issues
-            </div>
-          </div>
-        </button>
+        ))}
       </div>
 
-      {/* Two column */}
-      <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}
-      >
-        {/* Projects */}
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "16px",
-            padding: "24px",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
-          }}
-        >
-          <h2
-            style={{
-              margin: "0 0 20px",
-              fontSize: "18px",
-              fontWeight: 700,
-              color: "#111827",
-            }}
-          >
-            Recent Projects
-          </h2>
-          <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
-            <div
-              style={{
-                position: "relative",
-                width: "120px",
-                height: "120px",
-                flexShrink: 0,
-              }}
-            >
-              <svg
-                viewBox="0 0 36 36"
-                style={{
-                  width: "120px",
-                  height: "120px",
-                  transform: "rotate(-90deg)",
-                }}
-              >
-                {(() => {
-                  let offset = 0;
-                  return projects.map((p, i) => {
-                    const stroke = (p.pct / 100) * 100;
-                    const el = (
-                      <circle
-                        key={i}
-                        cx="18"
-                        cy="18"
-                        r="15"
-                        fill="none"
-                        stroke={p.color}
-                        strokeWidth="6"
-                        strokeDasharray={`${stroke} ${100 - stroke}`}
-                        strokeDashoffset={-offset}
-                      />
-                    );
-                    offset += stroke;
-                    return el;
-                  });
-                })()}
-              </svg>
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "10px",
-                    color: "#6b7280",
-                    textAlign: "center",
-                    lineHeight: 1.3,
-                  }}
-                >
-                  5-Year
-                  <br />
-                  Spending
-                  <br />
-                  Analysis
-                </div>
-              </div>
-            </div>
-            <div style={{ flex: 1 }}>
-              {projects.map((p) => (
-                <div
-                  key={p.label}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    marginBottom: "10px",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "10px",
-                      height: "10px",
-                      borderRadius: "50%",
-                      background: p.color,
-                    }}
-                  />
-                  <span style={{ fontSize: "13px", color: "#374151", flex: 1 }}>
-                    {p.label}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      color: "#111827",
-                    }}
-                  >
-                    {p.pct}%
-                  </span>
-                </div>
-              ))}
-            </div>
+      {/* ── Main Features Grid ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "32px", marginBottom: "48px" }}>
+        
+        {/* Live Activity Feed (Original Mock Data) */}
+        <div style={{ 
+          background: "white", borderRadius: "28px", padding: "32px", border: "1px solid #f1f5f9", 
+          boxShadow: "0 10px 15px -3px rgba(0,0,0,0.05)"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+             <h2 style={{ fontSize: "22px", fontWeight: 800, margin: 0, color: "#0f172a" }}>Live Activity Feed</h2>
+             <button onClick={() => navigate("complaints")} style={{ fontSize: "13px", fontWeight: 700, color: "#3b82f6", background: "none", border: "none", cursor: "pointer" }}>View All</button>
           </div>
-        </div>
-
-        {/* Live Feed */}
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "16px",
-            padding: "24px",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
-          }}
-        >
-          <h2
-            style={{
-              margin: "0 0 20px",
-              fontSize: "18px",
-              fontWeight: 700,
-              color: "#111827",
-            }}
-          >
-            Live Activity Feed
-          </h2>
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-          >
+          
+          <div style={{ display: "grid", gap: "12px" }}>
             {feed.map((f, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  padding: "12px",
-                  borderRadius: "12px",
-                  background: "#f9fafb",
-                }}
-              >
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "50%",
-                    background: `${f.color}20`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "16px",
-                    color: f.color
-                  }}
-                >
-                  {f.icon}
-                </div>
-                <div>
-                  <div
-                    style={{
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      color: "#111827",
-                    }}
-                  >
-                    {f.text}
-                  </div>
-                  <div style={{ fontSize: "11px", color: "#9ca3af" }}>
-                    {f.time}
-                  </div>
-                </div>
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: "16px", padding: "16px", borderRadius: "16px", background: "#f8fafc", border: "1px solid #f1f5f9" }}>
+                 <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: `${f.color}15`, color: f.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {f.icon}
+                 </div>
+                 <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: "14px", fontWeight: 700, color: "#1e293b" }}>{f.text}</div>
+                    <div style={{ fontSize: "12px", color: "#94a3b8" }}>{f.time}</div>
+                 </div>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Public Ledger Card */}
+        <div 
+          onClick={() => navigate("public-ledger")}
+          style={{ 
+            background: "linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)", 
+            borderRadius: "28px", padding: "32px", color: "white", cursor: "pointer",
+            display: "flex", flexDirection: "column", justifyContent: "space-between"
+          }}
+        >
+          <div>
+            <div style={{ width: "48px", height: "48px", background: "rgba(255,255,255,0.2)", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "24px" }}>
+              <Database size={24} />
+            </div>
+            <h2 style={{ fontSize: "24px", fontWeight: 800, margin: "0 0 12px" }}>Public Fund Ledger</h2>
+            <p style={{ opacity: 0.8, lineHeight: 1.6, fontSize: "14px" }}>
+              Audit every rupee allocated for village projects. 100% blockchain immutability.
+            </p>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "24px" }}>
+            <span style={{ fontSize: "14px", fontWeight: 800 }}>Explore Ledger</span>
+            <ArrowRight size={20} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Spending Analysis Row ── */}
+      <div style={{ background: "white", borderRadius: "28px", padding: "32px", border: "1px solid #f1f5f9", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
+         <h2 style={{ fontSize: "20px", fontWeight: 800, marginBottom: "24px", color: "#0f172a" }}>Budget Allocation Analysis</h2>
+         <div style={{ display: "flex", flexWrap: "wrap", gap: "32px", alignItems: "center" }}>
+            <div style={{ flex: 1, display: "grid", gap: "16px" }}>
+              {projects.map(p => (
+                <div key={p.label}>
+                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: 700, marginBottom: "6px" }}>
+                      <span>{p.label}</span>
+                      <span>{p.pct}%</span>
+                   </div>
+                   <div style={{ height: "8px", background: "#f1f5f9", borderRadius: "10px", overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${p.pct}%`, background: p.color }} />
+                   </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: "24px", background: "#f8fafc", borderRadius: "20px", textAlign: "center", minWidth: "200px" }}>
+               <Activity size={32} color="#10b981" style={{ marginBottom: "12px" }} />
+               <div style={{ fontSize: "14px", fontWeight: 700, color: "#1e293b" }}>Development Score</div>
+               <div style={{ fontSize: "32px", fontWeight: 900, color: "#10b981" }}>84%</div>
+            </div>
+         </div>
+      </div>
+
+      {/* ── Footer ── */}
+      <div style={{ textAlign: "center", borderTop: "1px solid #f1f5f9", paddingTop: "32px", marginTop: "48px" }}>
+        <p style={{ margin: 0, color: "#94a3b8", fontSize: "13px", fontWeight: 600 }}>
+          Managed by SmartPanchayat Digital Governance Unit © 2026
+        </p>
       </div>
     </div>
   );

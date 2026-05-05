@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
+import { ShieldCheck, Database } from "lucide-react";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../utils/web3Config";
 
 const STATUS_MAP = {
@@ -11,6 +12,7 @@ const STATUS_MAP = {
 
 export default function PublicFeed() {
   const [requests, setRequests]   = useState([]);
+  const [genesisFunds, setGenesisFunds] = useState([]);
   const [filtered, setFiltered]   = useState([]);
   const [filter, setFilter]       = useState("ALL");
   const [loading, setLoading]     = useState(true);
@@ -36,7 +38,10 @@ export default function PublicFeed() {
         CONTRACT_ADDRESS, CONTRACT_ABI, provider
       );
 
-      const all = await contract.getAllRequests();
+      const [all, rawGenesis] = await Promise.all([
+        contract.getAllRequests(),
+        contract.getAllGenesisFunds(),
+      ]);
 
       // Convert BigInt values to readable format
       const formatted = all.map((r) => ({
@@ -56,7 +61,17 @@ export default function PublicFeed() {
       // Sort newest first
       formatted.sort((a, b) => b.timestamp - a.timestamp);
 
+      const formattedGenesis = rawGenesis.map((g) => ({
+        id: g.id.toString(),
+        amount: parseFloat(ethers.formatUnits(g.amount, "wei")), // Handle large wei numbers, but fallback to direct Number if we didn't use wei. Wait, formatAmount expects standard numbers.
+        source: g.source,
+        ref: g.ref,
+        timestamp: Number(g.timestamp),
+      }));
+      formattedGenesis.sort((a, b) => b.timestamp - a.timestamp);
+
       setRequests(formatted);
+      setGenesisFunds(formattedGenesis);
       setLastUpdated(new Date());
       setError("");
     } catch (err) {
@@ -68,6 +83,8 @@ export default function PublicFeed() {
   const applyFilter = (f) => {
     if (f === "ALL") {
       setFiltered(requests);
+    } else if (f === "GENESIS") {
+      setFiltered(genesisFunds); // We will handle rendering differently
     } else {
       const statusCode = { PENDING: 0, APPROVED: 1, REJECTED: 2, COMPLETED: 3 };
       setFiltered(requests.filter(r => r.status === statusCode[f]));
@@ -102,6 +119,7 @@ export default function PublicFeed() {
     APPROVED:  requests.filter(r => r.status === 1).length,
     REJECTED:  requests.filter(r => r.status === 2).length,
     COMPLETED: requests.filter(r => r.status === 3).length,
+    GENESIS:   genesisFunds.length,
   };
 
   return (
@@ -163,7 +181,7 @@ export default function PublicFeed() {
       <div style={{
         display: "flex", gap: 10, marginBottom: 28, flexWrap: "wrap", justifyContent: "center"
       }}>
-        {["ALL", "PENDING", "APPROVED", "REJECTED", "COMPLETED"].map((f) => (
+        {["ALL", "PENDING", "APPROVED", "REJECTED", "COMPLETED", "GENESIS"].map((f) => (
           <button
             key={f}
             onClick={() => applyFilter(f)}
@@ -211,9 +229,53 @@ export default function PublicFeed() {
 
       {/* ── Request Cards ── */}
       <div style={{ display: "grid", gap: 24 }}>
-        {filtered.map((req) => {
-          const statusInfo = STATUS_MAP[req.status];
-          const { approvePercent, rejectPercent } = getVoteBar(req);
+        {filter === "GENESIS" ? (
+          filtered.map((g) => (
+            <div
+              key={g.id}
+              style={{
+                border: "1px solid #e2e8f0", borderRadius: 24,
+                padding: 28, background: "white",
+                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+                position: "relative", overflow: "hidden"
+              }}
+            >
+              <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 6, background: "#4f46e5" }} />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+                <div>
+                  <div style={{ fontSize: "11px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>
+                    GENESIS BLOCK #{g.id} · {formatDate(g.timestamp)}
+                  </div>
+                  <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#1e293b" }}>{g.source}</h3>
+                </div>
+                <div style={{
+                  background: "#eef2ff", color: "#4f46e5",
+                  border: `1.5px solid #4f46e544`,
+                  borderRadius: 100, padding: "6px 16px",
+                  fontSize: 12, fontWeight: 800, whiteSpace: "nowrap"
+                }}>
+                  RECEIVED FUND
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 12 }}>
+                <div style={{ background: "#f8fafc", borderRadius: 16, padding: 16, border: "1px solid #f1f5f9" }}>
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: 4 }}>Fund Amount</div>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: "#0f172a" }}>{formatAmount(g.amount)}</div>
+                </div>
+                <div style={{ background: "#f8fafc", borderRadius: 16, padding: 16, border: "1px solid #f1f5f9" }}>
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: 4 }}>Reference No.</div>
+                  <code style={{ fontSize: "13px", color: "#475569", fontWeight: 800 }}>{g.ref}</code>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "12px", fontWeight: 700, color: "#10b981", marginTop: "12px" }}>
+                <Database size={16} /> <span>Admin Genesis Record (Root Fund)</span>
+              </div>
+            </div>
+          ))
+        ) : (
+          filtered.map((req) => {
+            const statusInfo = STATUS_MAP[req.status];
+            const { approvePercent, rejectPercent } = getVoteBar(req);
 
           return (
             <div key={req.id} style={{
@@ -284,7 +346,8 @@ export default function PublicFeed() {
               </div>
             </div>
           );
-        })}
+        })
+      )}
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ import PresidentDashboard from "./components/PresidentDashboard";
 import ProfilePage from "./components/ProfilePage";
 import WalletSetupPage from "./components/blockchain/WalletSetupPage";
 import PublicFeed from "./components/PublicFeed";
+import MapPage from "./components/MapPage";
 import { getUser, logout } from "./utils/api";
 import { CircleDollarSign, Map as MapIcon } from "lucide-react";
 import "./App.css";
@@ -94,60 +95,7 @@ function App() {
       case "profile":
         return <ProfilePage user={authUser} navigate={navigate} />;
       case "map":
-        return (
-          <div
-            style={{
-              padding: "120px 24px",
-              textAlign: "center",
-              background: "#f8fafc",
-              minHeight: "60vh",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                marginBottom: "32px",
-              }}
-            >
-              <div
-                style={{
-                  width: "80px",
-                  height: "80px",
-                  background: "#dbeafe",
-                  color: "#1e40af",
-                  borderRadius: "24px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <MapIcon size={40} />
-              </div>
-            </div>
-            <h2
-              style={{
-                fontSize: "32px",
-                fontWeight: 800,
-                color: "#1e1b4b",
-                marginBottom: "12px",
-              }}
-            >
-              Geospatial Overview
-            </h2>
-            <p
-              style={{
-                color: "#64748b",
-                maxWidth: "400px",
-                margin: "0 auto",
-                lineHeight: 1.6,
-              }}
-            >
-              Spatial data visualization for ward-level issues and service
-              coverage maps is in development. Coming soon.
-            </p>
-          </div>
-        );
+        return <MapPage />;
       default:
         return <HomePage navigate={navigate} />;
     }

@@ -47,11 +47,11 @@ public class AuthController {
             @Valid @RequestBody RegisterRequest request) {
         
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        boolean isAdmin = auth != null && auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isAdminOrPresident = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_PRESIDENT"));
 
-        // SECURITY: If not an admin, force the role to CITIZEN to prevent privilege escalation.
-        if (!isAdmin) {
+        // SECURITY: If not an admin or president, force the role to CITIZEN to prevent privilege escalation.
+        if (!isAdminOrPresident) {
             request.setRole(com.example.Complaint_Management.enums.Role.CITIZEN);
             request.setWardId(null);
             request.setWardName(null);
@@ -84,7 +84,7 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Staff list retrieved", authService.listStaff()));
     }
     @PostMapping("/reset-wallet/{userId}")
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'PRESIDENT')")
     public ResponseEntity<ApiResponse<Void>> resetWallet(@PathVariable java.util.UUID userId) {
         authService.resetWallet(userId);
         return ResponseEntity.ok(ApiResponse.success("Wallet reset successfully. User can now link a new wallet.", null));
